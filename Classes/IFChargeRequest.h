@@ -37,6 +37,7 @@
 
     NSString* _returnAppName;
     NSString* _returnURL;
+    NSString* _requestBaseURI;
 
     NSString* _address;
     NSString* _amount;
@@ -74,6 +75,13 @@
 // when the transaction is complete. Should be a URL that is
 // registered to be handled by this app.
 @property (copy) NSString* returnURL;
+
+// requestBaseURI - If not nil, credit card terminal will derive its
+// requestURL by appending query params to this, otherwise
+// IF_CHARGE_API_BASE_URI will be used.
+//
+// NOTE - URL should be a string, ending just before but not including the ?.
+@property (copy) NSString* requestBaseURI;
 
 // setReturnURL - this setter is a helper that will take the extra
 // parameters passed in the dictionary and encode and include them in

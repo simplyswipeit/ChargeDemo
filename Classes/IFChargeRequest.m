@@ -105,6 +105,7 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 @synthesize delegate       = _delegate;
 @synthesize returnAppName  = _returnAppName;
 @synthesize returnURL      = _returnURL;
+@synthesize requestBaseURI = _requestBaseURI;
 @synthesize address        = _address;
 @synthesize amount         = _amount;
 @synthesize city           = _city;
@@ -192,7 +193,8 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 // values.
 - (NSURL*)requestURL
 {
-    NSMutableString* urlString = [[NSMutableString alloc] initWithString:IF_CHARGE_API_BASE_URI];
+    NSString *urlBase = (_requestBaseURI) ? _requestBaseURI : IF_CHARGE_API_BASE_URI;
+    NSMutableString* urlString = [[NSMutableString alloc] initWithString:urlBase];
     BOOL first = YES;
 
     // First build up the query params
