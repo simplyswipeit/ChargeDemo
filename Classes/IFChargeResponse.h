@@ -59,6 +59,11 @@ typedef enum {
 @private
     NSString*            _baseURL;
     NSString*            _amount;
+    NSString*            _subtotal;
+    NSString*            _tip;
+    NSString*            _tax;
+    NSString*            _shipping;
+    NSString*            _discount;
     NSString*            _cardType;
     NSString*            _currency;
     NSDictionary*        _extraParams;
@@ -71,6 +76,16 @@ typedef enum {
 // which is a currency value to two decimal places like @"50.00". This
 // property will only be set if responseCode is Accepted.
 @property (readonly,copy)   NSString*            amount;
+
+// amount subfields - A breakdown of the amount that was charged to
+// the card. These are strings of the same form as the amount property.
+// They will only be set if they were set in the IFChargeRequest, the
+// amount was not explicitly set, and responseCode is Accepted.
+@property (readonly,copy)   NSString*            subtotal;
+@property (readonly,copy)   NSString*            tip;
+@property (readonly,copy)   NSString*            tax;
+@property (readonly,copy)   NSString*            shipping;
+@property (readonly,copy)   NSString*            discount;
 
 // cardType - The type of card that was charged. This will be
 // something like "Visa", "MasterCard", "American Express", or

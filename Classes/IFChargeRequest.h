@@ -41,6 +41,11 @@
 
     NSString* _address;
     NSString* _amount;
+    NSString* _subtotal;
+    NSString* _tip;
+    NSString* _tax;
+    NSString* _shipping;
+    NSString* _discount;
     NSString* _city;
     NSString* _company;
     NSString* _country;
@@ -103,8 +108,19 @@
 @property (copy) NSString* address;
 
 // amount - The amount of the transaction.
-// Up to 15 digits with a decimal point.
+// Up to 15 digits with a decimal point. Can be set directly, or by
+// setting the amount subfields below. If set directly, all subfield
+// values will be ignored, otherwise the getter method will calculate
+// the amount using the subfields.
 @property (copy) NSString* amount;
+
+// amount subfields - A breakdown of the amount of the transaction.
+// These are strings of the same form as the amount property.
+@property (copy) NSString* subtotal;
+@property (copy) NSString* tip;
+@property (copy) NSString* tax;
+@property (copy) NSString* shipping;
+@property (copy) NSString* discount;
 
 // city - The city of the customer's billing address.
 // Up to 40 characters (no symbols).

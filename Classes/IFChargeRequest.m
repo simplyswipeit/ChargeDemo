@@ -70,6 +70,11 @@ static NSString* IFEncodeURIComponent( NSString* s )
     @"returnURL", \
     @"address", \
     @"amount", \
+    @"subtotal", \
+    @"tip", \
+    @"tax", \
+    @"shipping", \
+    @"discount", \
     @"city", \
     @"company", \
     @"country", \
@@ -97,6 +102,7 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 @interface IFChargeRequest ()
 
 - (NSString*)createAndStoreNonce;
++(NSNumberFormatter*)chargeAmountFormatter;
 
 @end
 
@@ -108,6 +114,11 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 @synthesize requestBaseURI = _requestBaseURI;
 @synthesize address        = _address;
 @synthesize amount         = _amount;
+@synthesize subtotal       = _subtotal;
+@synthesize tip            = _tip;
+@synthesize tax            = _tax;
+@synthesize shipping       = _shipping;
+@synthesize discount       = _discount;
 @synthesize city           = _city;
 @synthesize company        = _company;
 @synthesize country        = _country;
@@ -217,6 +228,46 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
     return url;
 }
 
+static float floatCheck(float theFloat) {
+    // make sure the float value doesn't indicate an overflow.
+    if (theFloat == HUGE_VAL || theFloat == -HUGE_VAL)
+        [NSException raise:NSInvalidArgumentException
+                    format:@"extraParams dictionary keys and values must all be strings"];
+    return theFloat;
+}
+
+- (NSString*)amount {
+    // return the amount if set explicitly
+    if (_amount) return _amount;
+
+    // calculate the amount using the subfields
+    float sum = 0.f;
+    float subtotal__ = floatCheck([self.subtotal floatValue]);
+    float tax__      = floatCheck([self.tax      floatValue]);
+    float tip__      = floatCheck([self.tip      floatValue]);
+    float shipping__ = floatCheck([self.shipping floatValue]);
+    float discount__ = floatCheck([self.discount floatValue]);
+    sum = subtotal__ + tax__ + tip__ + shipping__ - discount__;
+
+    NSNumber *dollarNumber = [[NSNumber alloc] initWithFloat:sum];
+    NSString *dollarString = [[IFChargeRequest chargeAmountFormatter] stringFromNumber:dollarNumber];
+    [dollarNumber release];
+
+    return dollarString;
+}
+
+static NSNumberFormatter *chargeAmountFormatter_;
++(NSNumberFormatter*)chargeAmountFormatter {
+    if (!chargeAmountFormatter_) {
+        chargeAmountFormatter_ = [[NSNumberFormatter alloc] init];
+        [chargeAmountFormatter_ setNumberStyle:NSNumberFormatterCurrencyStyle];
+        [chargeAmountFormatter_ setGeneratesDecimalNumbers:YES];
+        [chargeAmountFormatter_ setCurrencySymbol:@""];
+        [chargeAmountFormatter_ setPerMillSymbol:@""];
+    }
+    return chargeAmountFormatter_;
+}
+
 - (void)setReturnURL:(NSString*)url withExtraParams:(NSDictionary*)extraParams
 {
     BOOL hasQuery = 0 != [[[NSURL URLWithString:url] query] length];
@@ -318,6 +369,11 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 
     [_address release];
     [_amount release];
+    [_subtotal release];
+    [_tip release];
+    [_tax release];
+    [_shipping release];
+    [_discount release];
     [_city release];
     [_company release];
     [_country release];
