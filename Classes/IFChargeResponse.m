@@ -33,106 +33,6 @@
 
 #import "IFChargeRequest.h"
 
-#ifdef IF_INTERNAL
-
-#import "GTMRegex.h"   // for [NSString -gtm_matchesPattern:]
-#import "IFURLUtils.h"
-
-static __inline__ BOOL IFMatchesPattern( NSString* s, NSString* p )
-{
-    return [s gtm_matchesPattern:p];
-}
-
-#else
-
-#import <regex.h>
-
-static BOOL IFMatchesPattern( NSString* nsString, NSString* nsPattern )
-{
-    const char* string  = [nsString  cStringUsingEncoding:NSUTF8StringEncoding];
-    const char* pattern = [nsPattern cStringUsingEncoding:NSUTF8StringEncoding];
-
-    BOOL matches = NO;
-    BOOL compiled = NO;
-    int re_error;
-    regex_t re;
-
-    re_error = regcomp(
-        &re,
-        pattern,
-        REG_EXTENDED
-        | REG_NOSUB    // match only, no captures
-    );
-    if ( re_error )
-    {
-        NSLog( @"regcomp error %d", re_error );
-        goto Cleanup;
-    }
-    compiled = YES;
-
-    re_error = regexec(
-        &re,
-        string,
-        0, NULL, // no captures
-        0        // no flags
-    );
-    if ( re_error )
-    {
-        if ( REG_NOMATCH == re_error )
-        {
-            NSLog( @"string '%s' does not match pattern '%s'", string, pattern );
-        }
-        else
-        {
-            NSLog( @"regexec error %d", re_error );
-        }
-        goto Cleanup;
-    }
-
-    // No error, regex matched, input is valid
-    matches = YES;
-
-Cleanup:
-    if ( compiled )
-    {
-        regfree( &re );
-    }
-
-    return matches;
-}
-
-static NSMutableDictionary* IFParseQueryParameters( NSURL* url )
-{
-    NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
-    NSString*     queryString = [url query];
-
-    if ( [queryString length] )
-    {
-        NSArray* queryPairs = [queryString componentsSeparatedByString:@"&"];
-
-        for ( NSString* queryPair in queryPairs )
-        {
-            NSArray* queryComps = [queryPair componentsSeparatedByString:@"="];
-            if ( 2 != [queryComps count] )
-            {
-                // Only interested in field=value pairs
-                continue;
-            }
-
-            NSString* decodedField = [[queryComps objectAtIndex:0]
-                stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-            NSString* decodedValue = [[queryComps objectAtIndex:1]
-                stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-
-            [dict setObject:decodedValue forKey:decodedField];
-        }
-    }
-
-    return dict;
-}
-
-#endif
-
 #define IF_CHARGE_RESPONSE_FIELD_PATTERNS                     \
     @"^(0|[1-9][0-9]*)[.][0-9][0-9]$", @"amount",             \
     @"^(0|[1-9][0-9]*)[.][0-9][0-9]$", @"subtotal",             \
@@ -155,6 +55,8 @@ static NSMutableDictionary* IFParseQueryParameters( NSURL* url )
     IF_NSINT( kIFChargeResponseCodeError ),     @"error",     \
     nil
 
+#define IF_CHARGE_CARD_NUMBER_MASK @"X"
+
 static NSArray*      _fieldList;
 static NSDictionary* _fieldPatterns;
 static NSDictionary* _responseCodes;
@@ -170,8 +72,10 @@ static NSDictionary* _responseCodes;
 @property (readwrite,copy)   NSString*     cardType;
 @property (readwrite,copy)   NSString*     currency;
 @property (readwrite,retain) NSDictionary* extraParams;
+@property (readwrite,retain) NSString* baseURL;
 @property (readwrite,copy)   NSString*     redactedCardNumber;
 @property (readwrite,copy)   NSString*     responseType;
+@property (readwrite,assign) IFChargeResponseCode responseCode;
 
 - (void) validateFields;
 +(NSNumberFormatter*)chargeAmountFormatter;
@@ -179,16 +83,17 @@ static NSDictionary* _responseCodes;
 @end
 
 @implementation IFChargeResponse
-
-@synthesize amount             = _amount;
-@synthesize subtotal           = _subtotal;
-@synthesize tip                = _tip;
-@synthesize tax                = _tax;
-@synthesize shipping           = _shipping;
-@synthesize discount           = _discount;
+@dynamic amount;
+@dynamic subtotal;
+@dynamic tip;
+@dynamic tax;
+@dynamic shipping;
+@dynamic discount;
+@dynamic currency;
+@dynamic nonce;
+@dynamic baseURL;
+@dynamic extraParams;
 @synthesize cardType           = _cardType;
-@synthesize currency           = _currency;
-@synthesize extraParams        = _extraParams;
 @synthesize redactedCardNumber = _redactedCardNumber;
 @synthesize responseCode       = _responseCode;
 @synthesize responseType       = _responseType;
@@ -212,31 +117,10 @@ static NSDictionary* _responseCodes;
     return _responseCodes;
 }
 
-- initWithURL:(NSURL*)url
+- (id)initWithURL:(NSURL*)url
 {
-    if ( ( self = [super init] ) )
+    if ( ( self = [super initWithURL:url] ) )
     {
-        if ( nil == url )
-        {
-            [NSException raise:NSInvalidArgumentException
-                         format:@"URL must not be nil"];
-        }
-
-        NSMutableDictionary* queryFields = IFParseQueryParameters( url );
-
-        for ( NSString* field in _fieldList )
-        {
-            NSString* queryName = [IF_CHARGE_RESPONSE_FIELD_PREFIX
-                                      stringByAppendingString:field];
-            NSString* value = [queryFields valueForKey:queryName];
-            if ( [value length] )
-            {
-                [self setValue:value forKey:field];
-
-                [queryFields removeObjectForKey:field];
-            }
-        }
-
         NSString* expectedNonce = [[NSUserDefaults standardUserDefaults]
                                       objectForKey:IF_CHARGE_NONCE_KEY];
         if ( 0 == [expectedNonce length] )
@@ -245,14 +129,13 @@ static NSDictionary* _responseCodes;
                          format:@"Bad URL Request: No outstanding charge responses"];
         }
 
-        NSString* nonce = [queryFields objectForKey:IF_CHARGE_NONCE_KEY];
-        if ( 0 == [nonce length] )
+        if ( 0 == [_nonce length] )
         {
             [NSException raise:NSInvalidArgumentException
-                         format:@"Bad URL Request: Nonce missing from response"];
+                        format:@"Bad URL Request: Nonce missing."];
         }
 
-        if ( ![expectedNonce isEqualToString:nonce] )
+        if ( ![expectedNonce isEqualToString:self.nonce] )
         {
             [NSException raise:NSInvalidArgumentException
                          format:@"Bad URL Request: Incorrect nonce received"];
@@ -260,12 +143,77 @@ static NSDictionary* _responseCodes;
 
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:IF_CHARGE_NONCE_KEY];
 
-        self.extraParams = queryFields;
         [self validateFields];
     }
 
     return self;
 }
+
+// Display a dialog
+- (void)unableToOpenURL {
+    [super unableToOpenURL]; // releases pre-delay retains.
+    [[[[UIAlertView alloc]
+       initWithTitle:IF_RESPONSE_CAN_NOT_OPEN_URL_TITLE
+       message:IF_RESPONSE_CAN_NOT_OPEN_URL_MESSAGE
+       delegate:nil
+       cancelButtonTitle:IF_RESPONSE_CAN_NOT_OPEN_URL_BUTTON
+       otherButtonTitles:nil
+       ] autorelease] show];
+}
+
+- (id)initWithChargeRequest:(IFChargeRequest*)request responseCode:(IFChargeResponseCode)responseCode cardNumber:(NSString*)cardNumber cardType:(NSString*)cardType
+{
+    if (self = [super init]) {
+        // TODO: assert that there be a request and response code
+        
+        if (responseCode == kIFChargeResponseCodeApproved)
+        {
+            // set the vars
+            self.subtotal = request.subtotal;
+            self.tip = request.tip;
+            self.tax = request.tax;
+            self.shipping = request.shipping;
+            self.discount = request.discount;
+            self.baseURL = request.returnURL;
+
+            // assert that there be a card number
+            if (!cardNumber)
+            {
+                [NSException raise:NSInvalidArgumentException
+                             format:@"Could not init with request: did not receive a card number."];
+            }
+
+            // redact the card number
+            NSMutableString *cNumber = [[NSMutableString alloc] initWithString:cardNumber];
+            int ccNumberLength = [cNumber length];
+            for (int index = 0; index < ccNumberLength - 4; index++) {
+                [cNumber replaceCharactersInRange:( NSRange ){ index, 1 } withString:IF_CHARGE_CARD_NUMBER_MASK];
+            }
+            self.redactedCardNumber = cNumber;
+            [cNumber release];
+            
+            if (cardType) self.cardType = cardType;
+        }
+        self.responseCode = responseCode;
+        switch (responseCode) {
+            case kIFChargeResponseCodeApproved:
+                self.responseType = @"approved";
+                break;
+            case kIFChargeResponseCodeDeclined:
+                self.responseType = @"declined";
+                break;
+            case kIFChargeResponseCodeCancelled:
+                self.responseType = @"cancelled";
+                break;
+            case kIFChargeResponseCodeError:
+            default:
+                self.responseType = @"error";
+                break;
+        }
+    }
+    return self;
+}
+
 
 - (BOOL)amountSubfieldsAreSet {
     // returns true if any one amount subfield is set
@@ -286,34 +234,6 @@ static NSDictionary* _responseCodes;
     {
         return _currency;
     }
-}
-
-static float floatCheck(float theFloat) {
-    // make sure the float value doesn't indicate an overflow.
-    if (theFloat == HUGE_VAL || theFloat == -HUGE_VAL)
-        [NSException raise:NSInvalidArgumentException
-                    format:@"extraParams dictionary keys and values must all be strings"];
-    return theFloat;
-}
-
-- (NSString*)amount {
-    // return the amount if set explicitly
-    if (_amount) return _amount;
-
-    // calculate the amount using the subfields
-    float sum = 0.f;
-    float subtotal__ = floatCheck([self.subtotal floatValue]);
-    float tax__      = floatCheck([self.tax      floatValue]);
-    float tip__      = floatCheck([self.tip      floatValue]);
-    float shipping__ = floatCheck([self.shipping floatValue]);
-    float discount__ = floatCheck([self.discount floatValue]);
-    sum = subtotal__ + tax__ + tip__ + shipping__ - discount__;
-    
-    NSNumber *dollarNumber = [[NSNumber alloc] initWithFloat:sum];
-    NSString *dollarString = [[IFChargeResponse chargeAmountFormatter] stringFromNumber:dollarNumber];
-    [dollarNumber release];
-    
-    return dollarString;
 }
 
 static NSNumberFormatter *chargeAmountFormatter_;
@@ -379,15 +299,7 @@ static NSNumberFormatter *chargeAmountFormatter_;
 - (void)dealloc
 {
     [_baseURL release];
-    [_amount release];
-    [_subtotal release];
-    [_tip release];
-    [_tax release];
-    [_shipping release];
-    [_discount release];
     [_cardType release];
-    [_currency release];
-    [_extraParams release];
     [_redactedCardNumber release];
     [_responseType release];
 

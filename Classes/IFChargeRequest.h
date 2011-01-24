@@ -30,7 +30,9 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 //
-@interface IFChargeRequest : NSObject
+#import "IFChargeMessage.h"
+
+@interface IFChargeRequest : IFChargeMessage
 {
 @private
     NSObject* _delegate;
@@ -38,18 +40,12 @@
     NSString* _returnAppName;
     NSString* _returnURL;
     NSString* _requestBaseURI;
+    
 
     NSString* _address;
-    NSString* _amount;
-    NSString* _subtotal;
-    NSString* _tip;
-    NSString* _tax;
-    NSString* _shipping;
-    NSString* _discount;
     NSString* _city;
     NSString* _company;
     NSString* _country;
-    NSString* _currency;
     NSString* _description;
     NSString* _email;
     NSString* _firstName;
@@ -63,6 +59,26 @@
 // delegate - Will receive the
 // creditCardTerminalNotInstalled calback if the invocation fails.
 @property (assign) NSObject* delegate;
+
+// amount - The amount that was charged to the card. This is a string,
+// which is a currency value to two decimal places like @"50.00". This
+// property will only be set if responseCode is Accepted.
+@property (readwrite,copy)   NSString*            amount;
+
+// amount subfields - A breakdown of the amount that was charged to
+// the card. These are strings of the same form as the amount property.
+// They will only be set if they were set in the IFChargeRequest, the
+// amount was not explicitly set, and responseCode is Accepted.
+@property (readwrite,copy)   NSString*            subtotal;
+@property (readwrite,copy)   NSString*            tip;
+@property (readwrite,copy)   NSString*            tax;
+@property (readwrite,copy)   NSString*            shipping;
+@property (readwrite,copy)   NSString*            discount;
+
+// currency - The ISO 4217 currency code for the transaction
+// amount. For example, "USD" for US Dollars. This property will be
+// set when amount is set.
+@property (readwrite,copy)   NSString*            currency;
 
 //
 // Return Parameters - these properties are used to request that
@@ -81,13 +97,6 @@
 // registered to be handled by this app.
 @property (copy) NSString* returnURL;
 
-// requestBaseURI - If not nil, credit card terminal will derive its
-// requestURL by appending query params to this, otherwise
-// IF_CHARGE_API_BASE_URI will be used.
-//
-// NOTE - URL should be a string, ending just before but not including the ?.
-@property (copy) NSString* requestBaseURI;
-
 // setReturnURL - this setter is a helper that will take the extra
 // parameters passed in the dictionary and encode and include them in
 // the returnURL. The parameters from this dictionary will be
@@ -98,6 +107,13 @@
 // and values.
 - (void)setReturnURL:(NSString*)url withExtraParams:(NSDictionary*)extraParams;
 
+// requestBaseURI - If not nil, credit card terminal will derive its
+// requestURL by appending query params to this, otherwise
+// IF_CHARGE_API_BASE_URI will be used.
+//
+// NOTE - URL should be a string, ending just before but not including the ?.
+@property (copy) NSString* requestBaseURI;
+
 //
 // Charge Parameters - these properties are used to pre-populate the
 // form fields of Credit Card Terminal
@@ -106,21 +122,6 @@
 // address - The customer's billing address.
 // Up to 60 characters (no symbols).
 @property (copy) NSString* address;
-
-// amount - The amount of the transaction.
-// Up to 15 digits with a decimal point. Can be set directly, or by
-// setting the amount subfields below. If set directly, all subfield
-// values will be ignored, otherwise the getter method will calculate
-// the amount using the subfields.
-@property (copy) NSString* amount;
-
-// amount subfields - A breakdown of the amount of the transaction.
-// These are strings of the same form as the amount property.
-@property (copy) NSString* subtotal;
-@property (copy) NSString* tip;
-@property (copy) NSString* tax;
-@property (copy) NSString* shipping;
-@property (copy) NSString* discount;
 
 // city - The city of the customer's billing address.
 // Up to 40 characters (no symbols).
@@ -133,10 +134,6 @@
 // country - The country code of the customer's billing address. (E.g. US for USA)
 // Up to 60 characters (no symbols).
 @property (copy) NSString* country;
-
-// currency - The currency code of the amount. (E.g. USD for US Dollars)
-// 3 characters.
-@property (copy) NSString* currency;
 
 // description - The transaction description.
 // Up to 255 characters (no symbols).
@@ -170,29 +167,12 @@
 // Up to 20 characters (no symbols).
 @property (copy) NSString* zip;
 
-+ (NSArray*)knownFields;
-
 // init - designated initializer
 - init;
 
 // initWithDelegate: - Specifies the optional delegate when creating
 // the object.
 - initWithDelegate:(NSObject*)delegate;
-
-// requestURL - Retrieves the URL for the request. If you have special
-// requirements around invoking the URL, you can use this instead of
-// submit.
-- (NSURL*)requestURL;
-
-#if TARGET_OS_IPHONE
-
-// submit - Invokes the URL for this request. If Credit Card Terminal
-// is installed, your app will terminate and Credit Card Terminal will
-// run. If not, either creditCardTerminalNotInstalled will be sent to
-// the delegate or a default UIAlert will be displayed.
-- (void)submit;
-
-#endif
 
 @end
 
@@ -207,8 +187,6 @@
 
 #define IF_CHARGE_API_VERSION  @"1.0.0"
 #define IF_CHARGE_API_BASE_URI @"com-innerfence-ccterminal://charge/" IF_CHARGE_API_VERSION @"/"
-
-#define IF_CHARGE_NONCE_KEY @"ifcc_request_nonce"
 
 // These macros define the default message used for the UIAlert when
 // Credit Card Terminal is not installed. Override these strings in

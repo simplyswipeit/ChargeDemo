@@ -66,7 +66,11 @@
     // Finally, we can supply customer and transaction data so that it
     // will be pre-filled for submission with the charge.
     chargeRequest.address        = @"123 Test St";
-    chargeRequest.amount         = @"50.00";
+    chargeRequest.subtotal       = @"50.00";
+    chargeRequest.tip            = @"10.00";
+    chargeRequest.tax            = @"5.00";
+    chargeRequest.shipping       = @"5.00";
+    chargeRequest.discount       = @"3.00";
     chargeRequest.currency       = @"USD";
     chargeRequest.city           = @"Nowhereville";
     chargeRequest.company        = @"Company Inc";
@@ -79,6 +83,9 @@
     chargeRequest.phone          = @"555-1212";
     chargeRequest.state          = @"HI";
     chargeRequest.zip            = @"98021";
+
+    // TODO: doco
+    chargeRequest.requestBaseURI = @"swipeit://com.macally.swipeit/";
 
     // The IFChargeRequest object will retain itself and any specified
     // delegate for the duration of the request/timeout period, so
