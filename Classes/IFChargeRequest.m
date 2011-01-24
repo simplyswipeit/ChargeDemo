@@ -337,6 +337,7 @@ static NSNumberFormatter *chargeAmountFormatter_;
         if ( !assuredSuccess )
         {
             // Assured failure -- early out.
+            [self retain]; // ... balances out autorelease in unableToOpenURL;
             [self creditCardTerminalNotInstalled];
             return;
         }
