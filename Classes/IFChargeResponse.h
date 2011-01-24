@@ -30,7 +30,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 //
-#define IF_CHARGE_RESPONSE_FIELD_PREFIX @"ifcc_"
+#import "IFChargeMessage.h"
+#import "IFChargeRequest.h"
 
 typedef enum {
     // Approved - The card was approved and charged.
@@ -54,38 +55,15 @@ typedef enum {
     kIFChargeResponseCodeError
 } IFChargeResponseCode;
 
-@interface IFChargeResponse : NSObject
+@interface IFChargeResponse : IFChargeMessage
 {
 @private
-    NSString*            _baseURL;
-    NSString*            _amount;
-    NSString*            _subtotal;
-    NSString*            _tip;
-    NSString*            _tax;
-    NSString*            _shipping;
-    NSString*            _discount;
     NSString*            _cardType;
-    NSString*            _currency;
-    NSDictionary*        _extraParams;
+
     NSString*            _redactedCardNumber;
     IFChargeResponseCode _responseCode;
     NSString*            _responseType;
 }
-
-// amount - The amount that was charged to the card. This is a string,
-// which is a currency value to two decimal places like @"50.00". This
-// property will only be set if responseCode is Accepted.
-@property (readonly,copy)   NSString*            amount;
-
-// amount subfields - A breakdown of the amount that was charged to
-// the card. These are strings of the same form as the amount property.
-// They will only be set if they were set in the IFChargeRequest, the
-// amount was not explicitly set, and responseCode is Accepted.
-@property (readonly,copy)   NSString*            subtotal;
-@property (readonly,copy)   NSString*            tip;
-@property (readonly,copy)   NSString*            tax;
-@property (readonly,copy)   NSString*            shipping;
-@property (readonly,copy)   NSString*            discount;
 
 // cardType - The type of card that was charged. This will be
 // something like "Visa", "MasterCard", "American Express", or
@@ -93,25 +71,6 @@ typedef enum {
 // Accepted. In the case that the card type is unknown, this property
 // will be nil.
 @property (readonly,copy)   NSString*            cardType;
-
-// currency - The ISO 4217 currency code for the transaction
-// amount. For example, "USD" for US Dollars. This property will be
-// set when amount is set.
-@property (readonly,copy)   NSString*            currency;
-
-// extraParams - This dictionary contains any unrecognized query
-// parameters that were part of the URL. This should be the same as
-// the dictionary you passed to setReturnURL:WithExtraPrams: when
-// creating the IFChargeRequest. If there are no extra parameters,
-// this property will be an empty dictionary.
-//
-// WARNING - The URL is an attack vector to your iPhone app, just like
-// if it were a web app; you must be wary of SQL injection and similar
-// malicious data attacks. As such, you will need to validate any
-// parameters from the extraParams fields that you will be using. For
-// example, if you expect a numeric value, you should ensure the field
-// is comprised of digits.
-@property (readonly,retain) NSDictionary*        extraParams;
 
 // redactedCardNumber - This string is the credit card number with all
 // but the last four digits replaced by 'X'. This property will only
@@ -121,15 +80,19 @@ typedef enum {
 // responseCode - One of the IFChargeResponseCode enum values.
 @property (readonly,assign) IFChargeResponseCode responseCode;
 
-// initWithURL - Pass the URL that you receive in
-// application:handleOpenURL: and the resulting object will have the
-// properties set. Any fields that aren't part of the usual response
-// will be exposed in the extraParams dictionary for your convenience.
-//
-// Throws an exception if the input is not a valid charge response URL.
-- initWithURL:(NSURL*)url;
+// TODO: doco
+- (id)initWithChargeRequest:(IFChargeRequest*)request responseCode:(IFChargeResponseCode)responseCode cardNumber:(NSString*)cardNumber cardType:(NSString*)cardType;
 
-+ (NSArray*)knownFields;
 + (NSDictionary*)responseCodeMapping;
 
 @end
+
+
+// These macros define the default message used for the UIAlert when
+// Credit Card Terminal is not installed. Override these strings in
+// your string table for other languages.
+#define IF_RESPONSE_CAN_NOT_OPEN_URL_BUTTON  ( NSLocalizedString( @"OK", nil ) )
+#define IF_RESPONSE_CAN_NOT_OPEN_URL_MESSAGE ( NSLocalizedString( \
+@"The system could not match the URL provided to any installed application.", nil \
+) )
+#define IF_RESPONSE_CAN_NOT_OPEN_URL_TITLE   ( NSLocalizedString( @"Unable to return to application.", nil ) )

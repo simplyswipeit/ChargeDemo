@@ -19,6 +19,7 @@
 		945DC3320EE876AB008A303C /* IFChargeResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 945DC3310EE876AB008A303C /* IFChargeResponse.m */; };
 		94FD90E40EEF18F1001680A6 /* ChargeDemoAppDelegate+HandleURL.m in Sources */ = {isa = PBXBuildFile; fileRef = 94FD90E30EEF18F1001680A6 /* ChargeDemoAppDelegate+HandleURL.m */; };
 		94FFCF6B0F6B2D7000A8072A /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 94FFCF6A0F6B2D7000A8072A /* Icon.png */; };
+		E89FC19612ED2B7E00DBD6FF /* IFChargeMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = E89FC19512ED2B7E00DBD6FF /* IFChargeMessage.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,8 @@
 		945DC3350EE876C0008A303C /* README.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.markdown; sourceTree = "<group>"; };
 		94FD90E30EEF18F1001680A6 /* ChargeDemoAppDelegate+HandleURL.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "ChargeDemoAppDelegate+HandleURL.m"; sourceTree = "<group>"; };
 		94FFCF6A0F6B2D7000A8072A /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
+		E89FC19412ED2B7E00DBD6FF /* IFChargeMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IFChargeMessage.h; sourceTree = "<group>"; };
+		E89FC19512ED2B7E00DBD6FF /* IFChargeMessage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IFChargeMessage.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -129,6 +132,8 @@
 				945DC2E10EE703AD008A303C /* IFChargeRequest.m */,
 				945DC3300EE876AB008A303C /* IFChargeResponse.h */,
 				945DC3310EE876AB008A303C /* IFChargeResponse.m */,
+				E89FC19412ED2B7E00DBD6FF /* IFChargeMessage.h */,
+				E89FC19512ED2B7E00DBD6FF /* IFChargeMessage.m */,
 			);
 			name = "Code for copying into your project";
 			sourceTree = "<group>";
@@ -212,6 +217,7 @@
 				945DC2E20EE703AD008A303C /* IFChargeRequest.m in Sources */,
 				945DC3320EE876AB008A303C /* IFChargeResponse.m in Sources */,
 				94FD90E40EEF18F1001680A6 /* ChargeDemoAppDelegate+HandleURL.m in Sources */,
+				E89FC19612ED2B7E00DBD6FF /* IFChargeMessage.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -37,34 +37,6 @@
 #import <UIKit/UIKit.h>
 #endif
 
-#ifdef IF_INTERNAL
-
-#import "IFURLUtils.h"
-
-#else
-
-// CFURLCreateStringByAddingPercentEscapes by default leaves legal
-// URL characters alone, which is not what we want. So we'll specify
-// that all the reserved chars *should* be encoded. This is the same
-// as the 'reserved' BNF production from RFC 3986.
-#define URI_RESERVED_CHARS @":/?#[]@!$&'()*+,;="
-
-static NSString* IFEncodeURIComponent( NSString* s )
-{
-    CFStringRef encodedValue =
-        CFURLCreateStringByAddingPercentEscapes(
-            kCFAllocatorDefault,
-            (CFStringRef)s,
-            NULL,
-            (CFStringRef)URI_RESERVED_CHARS,
-            kCFStringEncodingUTF8
-        );
-
-    return [NSMakeCollectable( encodedValue ) autorelease];
-}
-
-#endif
-
 #define IF_CHARGE_REQUEST_FIELD_LIST \
     @"returnAppName", \
     @"returnURL", \
@@ -102,27 +74,31 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 @interface IFChargeRequest ()
 
 - (NSString*)createAndStoreNonce;
-+(NSNumberFormatter*)chargeAmountFormatter;
 
+@property (readwrite,retain) NSDictionary* extraParams;  // TODO: doco
+@property (readwrite,retain) NSString* nonce;
+@property (readwrite,retain) NSString* baseURL;
 @end
 
 @implementation IFChargeRequest
-
+@dynamic amount;
+@dynamic subtotal;
+@dynamic tip;
+@dynamic tax;
+@dynamic shipping;
+@dynamic discount;
+@dynamic currency;
+@dynamic nonce;
+@dynamic baseURL;
+@dynamic extraParams;
 @synthesize delegate       = _delegate;
 @synthesize returnAppName  = _returnAppName;
 @synthesize returnURL      = _returnURL;
 @synthesize requestBaseURI = _requestBaseURI;
 @synthesize address        = _address;
-@synthesize amount         = _amount;
-@synthesize subtotal       = _subtotal;
-@synthesize tip            = _tip;
-@synthesize tax            = _tax;
-@synthesize shipping       = _shipping;
-@synthesize discount       = _discount;
 @synthesize city           = _city;
 @synthesize company        = _company;
 @synthesize country        = _country;
-@synthesize currency       = _currency;
 @synthesize description    = _description;
 @synthesize email          = _email;
 @synthesize firstName      = _firstName;
@@ -179,9 +155,6 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 // otherwise, display a default dialog.
 - (void)creditCardTerminalNotInstalled
 {
-    [self autorelease];
-    [_delegate autorelease];
-
     if ( _delegate )
     {
         [_delegate creditCardTerminalNotInstalled];
@@ -201,71 +174,11 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 }
 
 // Create the appropriate request URL based on the current property
-// values.
+// values. // TODO: more specific doco
 - (NSURL*)requestURL
 {
-    NSString *urlBase = (_requestBaseURI) ? _requestBaseURI : IF_CHARGE_API_BASE_URI;
-    NSMutableString* urlString = [[NSMutableString alloc] initWithString:urlBase];
-    BOOL first = YES;
-
-    // First build up the query params
-    for ( NSString* field in _fieldList )
-    {
-        NSString* value = [self valueForKey:field];
-        if ( [value length] )
-        {
-            [urlString appendFormat:@"%@%@=%@",
-                       first ? @"?" : @"&",
-                       field,
-                       IFEncodeURIComponent( value )];
-            first = NO;
-        }
-    }
-
-    // Convert to NSURL
-    NSURL* url = [NSURL URLWithString:urlString];
-    [urlString release];
-    return url;
-}
-
-static float floatCheck(float theFloat) {
-    // make sure the float value doesn't indicate an overflow.
-    if (theFloat == HUGE_VAL || theFloat == -HUGE_VAL)
-        [NSException raise:NSInvalidArgumentException
-                    format:@"extraParams dictionary keys and values must all be strings"];
-    return theFloat;
-}
-
-- (NSString*)amount {
-    // return the amount if set explicitly
-    if (_amount) return _amount;
-
-    // calculate the amount using the subfields
-    float sum = 0.f;
-    float subtotal__ = floatCheck([self.subtotal floatValue]);
-    float tax__      = floatCheck([self.tax      floatValue]);
-    float tip__      = floatCheck([self.tip      floatValue]);
-    float shipping__ = floatCheck([self.shipping floatValue]);
-    float discount__ = floatCheck([self.discount floatValue]);
-    sum = subtotal__ + tax__ + tip__ + shipping__ - discount__;
-
-    NSNumber *dollarNumber = [[NSNumber alloc] initWithFloat:sum];
-    NSString *dollarString = [[IFChargeRequest chargeAmountFormatter] stringFromNumber:dollarNumber];
-    [dollarNumber release];
-
-    return dollarString;
-}
-
-static NSNumberFormatter *chargeAmountFormatter_;
-+(NSNumberFormatter*)chargeAmountFormatter {
-    if (!chargeAmountFormatter_) {
-        chargeAmountFormatter_ = [[NSNumberFormatter alloc] init];
-        [chargeAmountFormatter_ setNumberStyle:NSNumberFormatterCurrencyStyle];
-        [chargeAmountFormatter_ setGeneratesDecimalNumbers:YES];
-        [chargeAmountFormatter_ setCurrencySymbol:@""];
-        [chargeAmountFormatter_ setPerMillSymbol:@""];
-    }
-    return chargeAmountFormatter_;
+    self.baseURL = (_requestBaseURI) ? _requestBaseURI : IF_CHARGE_API_BASE_URI;
+    return [super requestURL];
 }
 
 - (void)setReturnURL:(NSString*)url withExtraParams:(NSDictionary*)extraParams
@@ -323,43 +236,15 @@ static NSNumberFormatter *chargeAmountFormatter_;
         ];
     }
 
-    // Submit the URL
-    NSURL* url = [self requestURL];
-
-    UIApplication* app = [UIApplication sharedApplication];
-
-    // On newer OSes, we can query and know for sure if Credit Card
-    // Terminal is installed.
-    BOOL assuredSuccess = NO;
-    if ( [app respondsToSelector:@selector(canOpenURL:)] )
-    {
-        assuredSuccess = [app canOpenURL:url];
-        if ( !assuredSuccess )
-        {
-            // Assured failure -- early out.
-            [self retain]; // ... balances out autorelease in unableToOpenURL;
-            [self creditCardTerminalNotInstalled];
-            return;
-        }
-    }
-
-    [[UIApplication sharedApplication] openURL:url];
-
-    if ( !assuredSuccess )
-    {
-        // On older OSes, if the openURL succeeds, this app will
-        // terminate. We register here to receive a callback in 1
-        // second, which will only happen if we don't terminate,
-        // meaning the openURL failed.
-        [self retain];
-        [_delegate retain];
-        [self performSelector:@selector(creditCardTerminalNotInstalled)
-              withObject:nil
-              afterDelay:1];
-    }
+    [super submit];
 }
 
 #endif
+
+- (void)unableToOpenURL {
+    [super unableToOpenURL];
+    [self creditCardTerminalNotInstalled];
+}
 
 - (void)dealloc
 {
@@ -367,18 +252,12 @@ static NSNumberFormatter *chargeAmountFormatter_;
 
     [_returnAppName release];
     [_returnURL release];
+    [_requestBaseURI release];
 
     [_address release];
-    [_amount release];
-    [_subtotal release];
-    [_tip release];
-    [_tax release];
-    [_shipping release];
-    [_discount release];
     [_city release];
     [_company release];
     [_country release];
-    [_currency release];
     [_description release];
     [_email release];
     [_firstName release];
