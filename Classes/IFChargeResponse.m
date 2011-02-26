@@ -30,7 +30,6 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 #import "IFChargeResponse.h"
-
 #import "IFChargeRequest.h"
 
 #define IF_CHARGE_RESPONSE_FIELD_PATTERNS                     \

@@ -7,6 +7,8 @@
 //
 
 #import "IFChargeMessage.h"
+NSString *const IFInvalidArgumentLengthException = @"IFInvalidArgumentLengthException";
+NSString *const IFDisallowedCharacterException = @"IFDisallowedCharacterException";
 
 #ifdef IF_INTERNAL
 

@@ -5,10 +5,17 @@
 //  Created by Ben Acland on 1/23/11.
 //  Copyright 2011 __MyCompanyName__. All rights reserved.
 //
+#import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 
 extern BOOL IFMatchesPattern( NSString* s, NSString* p );
 extern NSString* IFEncodeURIComponent( NSString* s );
+
+// Indicates that an argument was longer or shorter than allowed
+extern NSString *const IFInvalidArgumentLengthException;
+
+// Indicates that an argument contained a disallowed character
+extern NSString *const IFDisallowedCharacterException;
 
 #define IF_CHARGE_MESSAGE_FIELD_PREFIX @"ifcc_"
 #define IF_CHARGE_NONCE_KEY @"ifcc_request_nonce"
