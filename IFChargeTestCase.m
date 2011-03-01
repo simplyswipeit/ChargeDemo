@@ -119,6 +119,15 @@ NSMutableString * randomEmailAddress(BOOL shouldBeValid, int stringLength) {
     return [NSMutableString stringWithString:candidate];
 }
 
+NSString * randomInvalidURLString(int stringLength) {
+    NSString *candidate = @"";
+    NSURL *testURL;
+    while ((testURL = [NSURL URLWithString:candidate])) { // Will retun non-nil as long as the string conforms to Must conform to RFC 2396.
+        candidate = randomStringFromCharacterSet([NSCharacterSet alphanumericCharacterSet], 47);
+    }
+    return candidate;
+}
+
 #pragma -
 #pragma Reusable Test Components
 
@@ -161,6 +170,12 @@ NSMutableString * randomEmailAddress(BOOL shouldBeValid, int stringLength) {
 }
 
 - (void)testTextSetter:(SEL)setter getter:(SEL)getter onObject:(id)obj withMaxLength:(NSUInteger)maxLength forbiddingCharacterSets:firstSet, ... {
+    // Passing 0 as maxLength prevents length limit testing.
+    // Passing nil as firstSet prevents forbidden character testing
+    BOOL testCharacters = (firstSet != nil);
+    BOOL testLength = (maxLength != 0);
+    NSUInteger lengthLimit = testLength ? 256 : maxLength;
+
     // Test that the object responds to both selectors
     STAssertTrue([obj respondsToSelector:setter], @"Object %@ does not respond to text-setting selector %@", obj, NSStringFromSelector(setter));
     STAssertTrue([obj respondsToSelector:getter], @"Object %@ does not respond to text-getting selector %@", obj, NSStringFromSelector(getter));
@@ -171,7 +186,7 @@ NSMutableString * randomEmailAddress(BOOL shouldBeValid, int stringLength) {
     va_list argumentList;
     id nextSet;
 
-    if (firstSet) {
+    if (testCharacters) {
         NSMutableCharacterSet *cumulativeCharacterSet = [firstSet mutableCopy]; // will be released at end of method
         va_start(argumentList, firstSet);
         while ((nextSet = va_arg(argumentList, id)))
@@ -181,8 +196,8 @@ NSMutableString * randomEmailAddress(BOOL shouldBeValid, int stringLength) {
         allowedCharacterSet = [disallowedCharacterSet invertedSet];
     } else {
         // If you don't provide any character sets, we default to allowing the
-        // alphanumeric set, and faux disallowing everything else. After all,
-        // you don't care, right?
+        // alphanumeric set, and faux disallowing everything else. We don't actually
+        // run the forbidden character tests.
         allowedCharacterSet = [NSCharacterSet alphanumericCharacterSet];
         disallowedCharacterSet = [[allowedCharacterSet invertedSet] retain]; // retained to balance out end-of-method release
     }
@@ -197,7 +212,7 @@ NSMutableString * randomEmailAddress(BOOL shouldBeValid, int stringLength) {
      */
 
     // Test that an allowable string of maximum length can be set
-    testString = randomStringFromCharacterSet(allowedCharacterSet, maxLength);
+    testString = randomStringFromCharacterSet(allowedCharacterSet, lengthLimit);
     STAssertNoThrow([obj performSelector:setter withObject:testString], @"%@ - '%@' rejected the supposedly acceptable max-length string '%@'", 
                     obj, NSStringFromSelector(setter), testString);
     NSString *gotString = (NSString*)[obj performSelector:getter];
@@ -205,41 +220,46 @@ NSMutableString * randomEmailAddress(BOOL shouldBeValid, int stringLength) {
                          NSStringFromSelector(setter), NSStringFromSelector(getter), testString, gotString);
     
     // Test that an allowable string of maximum length +1 can NOT be set, and raises IFInvalidArgumentLengthException
-    testString = randomStringFromCharacterSet(allowedCharacterSet, maxLength+1);
-    STAssertThrows([obj performSelector:setter withObject:testString], @"Object '%@' should raise %@ when %@ is passed an argument of length greater than %d",
-                           obj, IFInvalidArgumentLengthException, NSStringFromSelector(setter), maxLength);
+    if (testLength) {
+        testString = randomStringFromCharacterSet(allowedCharacterSet, lengthLimit+1);
+        STAssertThrows([obj performSelector:setter withObject:testString], @"Object '%@' should raise %@ when %@ is passed an argument of length greater than %d",
+                       obj, IFInvalidArgumentLengthException, NSStringFromSelector(setter), lengthLimit);
+    }
     
     // Test that every allowable character may be set (ie does not raise an exception)
-    NSMutableArray *unExceptedCharacters = [charactersInSet(allowedCharacterSet) mutableCopy];
-    __block NSMutableIndexSet *exceptedIndexes = [[NSMutableIndexSet alloc] init];
-    [unExceptedCharacters enumerateObjectsUsingBlock:^(id character, NSUInteger idx, BOOL *stop) {
-        @try {
-            [obj performSelector:setter withObject:character];
-        }
-        @catch (NSException *exception) {
-            [exceptedIndexes addIndex:idx];
-        }
-    }];
-    [unExceptedCharacters removeObjectsAtIndexes:exceptedIndexes];
-    STAssertTrue([exceptedIndexes count] == 0, @"'%@' should'n raise an exception for the following characters: '%@'", obj, unExceptedCharacters);
-    [unExceptedCharacters release]; unExceptedCharacters = nil;
-    [exceptedIndexes removeAllIndexes];
+    if (testCharacters) {
+        NSMutableArray *unExceptedCharacters = [charactersInSet(allowedCharacterSet) mutableCopy];
+        __block NSMutableIndexSet *exceptedIndexes = [[NSMutableIndexSet alloc] init];
+        [unExceptedCharacters enumerateObjectsUsingBlock:^(id character, NSUInteger idx, BOOL *stop) {
+            @try {
+                [obj performSelector:setter withObject:character];
+            }
+            @catch (NSException *exception) {
+                [exceptedIndexes addIndex:idx];
+            }
+        }];
+        [unExceptedCharacters removeObjectsAtIndexes:exceptedIndexes];
+        STAssertTrue([exceptedIndexes count] == 0, @"'%@' should'n raise an exception for the following characters: '%@'", obj, unExceptedCharacters);
+        [unExceptedCharacters release]; unExceptedCharacters = nil;
+        [exceptedIndexes removeAllIndexes];
+        
+        // Test that every disallowed character may NOT be set, and raises IFDisallowedCharacterException
+        unExceptedCharacters = [charactersInSet(disallowedCharacterSet) mutableCopy];
+        [unExceptedCharacters enumerateObjectsUsingBlock:^(id character, NSUInteger idx, BOOL *stop) {
+            @try {
+                [obj performSelector:setter withObject:character];
+            }
+            @catch (NSException *exception) {
+                [exceptedIndexes addIndex:idx];
+            }
+        }];
+        [unExceptedCharacters removeObjectsAtIndexes:exceptedIndexes];
+        STAssertTrue([unExceptedCharacters count] == 0, @"'%@' should raise %@ for the following characters: '%@'", obj, IFDisallowedCharacterException, unExceptedCharacters);
 
-    // Test that every disallowed character may NOT be set, and raises IFDisallowedCharacterException
-    unExceptedCharacters = [charactersInSet(disallowedCharacterSet) mutableCopy];
-    [unExceptedCharacters enumerateObjectsUsingBlock:^(id character, NSUInteger idx, BOOL *stop) {
-        @try {
-            [obj performSelector:setter withObject:character];
-        }
-        @catch (NSException *exception) {
-            [exceptedIndexes addIndex:idx];
-        }
-    }];
-    [unExceptedCharacters removeObjectsAtIndexes:exceptedIndexes];
-    STAssertTrue([unExceptedCharacters count] == 0, @"'%@' should raise %@ for the following characters: '%@'", obj, IFDisallowedCharacterException, unExceptedCharacters);
+        [exceptedIndexes release];
+        [unExceptedCharacters release];
+    }
 
-    [exceptedIndexes release];
-    [unExceptedCharacters release];
     [disallowedCharacterSet release];
 }
 

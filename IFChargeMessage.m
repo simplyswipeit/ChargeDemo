@@ -178,7 +178,7 @@ static NSNumberFormatter *chargeAmountFormatter_;
 }
 
 - (id)initWithURL:(NSURL*)url {
-    if (self = [super init])
+    if ((self = [super init]))
     {
         if ( nil == url )
         {
