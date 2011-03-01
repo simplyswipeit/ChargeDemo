@@ -54,8 +54,6 @@
     IF_NSINT( kIFChargeResponseCodeError ),     @"error",     \
     nil
 
-#define IF_CHARGE_CARD_NUMBER_MASK @"X"
-
 static NSArray*      _fieldList;
 static NSDictionary* _fieldPatterns;
 static NSDictionary* _responseCodes;
@@ -162,7 +160,7 @@ static NSDictionary* _responseCodes;
 
 - (id)initWithChargeRequest:(IFChargeRequest*)request responseCode:(IFChargeResponseCode)responseCode cardNumber:(NSString*)cardNumber cardType:(NSString*)cardType
 {
-    if (self = [super init]) {
+    if ((self = [super init])) {
         // TODO: assert that there be a request and response code
         
         if (responseCode == kIFChargeResponseCodeApproved)
@@ -227,7 +225,7 @@ static NSDictionary* _responseCodes;
 {
     if ( 0 == [_currency length] && (0 != [_amount length] || [self amountSubfieldsAreSet]) )
     {
-        return @"USD";
+        return IF_CHARGE_DEFAULT_CURRENCY;
     }
     else
     {

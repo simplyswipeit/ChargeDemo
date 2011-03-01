@@ -19,6 +19,7 @@
 #import "IFChargeMessage.h"
 
 extern NSMutableString * randomStringFromCharacterSet(NSCharacterSet *characterSet, int stringLength);
+extern NSString * randomInvalidURLString(int stringLength);
 
 @interface IFChargeTestCase : SenTestCase {
     IFChargeRequest *testRequest_;
