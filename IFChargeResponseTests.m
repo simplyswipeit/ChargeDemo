@@ -14,7 +14,7 @@
 //TODO: check the attributes of the public properties
 
 - (void)testChargeRequestInit {
-    // TODO: Roll up a dummy IFChargeRequest, use it to init a ChargeResponse
+    // Roll up a dummy IFChargeRequest, use it to init a ChargeResponse
     testRequest_.amount = nil;
     testRequest_.subtotal = @"5.00";
     testRequest_.tip = @"1.00";
@@ -66,11 +66,6 @@
                          @"Property baseURL copied incorrectly, from '%@' to '%@'",
                          testReturnURL, newResp.baseURL);
 
-    // Test that the currency defaults to IF_CHARGE_DEFAULT_CURRENCY
-    STAssertEqualObjects(IF_CHARGE_DEFAULT_CURRENCY, newResp.currency,
-                         @"Property currency should default to '%@,' but instead it was '%@'",
-                         IF_CHARGE_DEFAULT_CURRENCY, newResp.currency);    
-
     // Test that the response and card types were set correctly // BONUS: basic card number verification test
     STAssertEquals(testRespCode, newResp.responseCode,    
                    @"Property responseType copied incorrectly, from '%d' to '%d'",
@@ -96,6 +91,8 @@
                      @"Character at index %d of redacted card number should be %C but was %C",
                      i, [newResp.redactedCardNumber characterAtIndex:i], maskUnichar);
     }
+
+    // NOTE: We test currency property defaults in IFChargeMessageTests
 }
 
 @end

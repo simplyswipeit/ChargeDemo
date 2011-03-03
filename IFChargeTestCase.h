@@ -29,6 +29,9 @@ extern NSString * randomInvalidURLString(int stringLength);
 @property (nonatomic, retain) IFChargeRequest *testRequest;
 @property (nonatomic, retain) IFChargeResponse *testResponse;
 
+// Inits new test objects.
+- (void)resetTestObjects;
+
 // This method takes in an object, a setter selector, and a maximum length, and
 // makesu sure that a) in-length, symbolless strings may be set, and b) that
 // setting too-long, symbol-including strings raises an exception.
@@ -40,6 +43,11 @@ extern NSString * randomInvalidURLString(int stringLength);
 // Similar, but for email fields. Tests number range, and valid email format.
 - (void)testEmailTextFieldSetter:(SEL)setter getter:(SEL)getter onObject:(id)obj withMaxLength:(NSUInteger)maxLength;
 
+// Called internally by all of the above.
 - (void)testTextSetter:(SEL)setter getter:(SEL)getter onObject:(id)obj withMaxLength:(NSUInteger)maxLength forbiddingCharacterSets:firstSet, ... NS_REQUIRES_NIL_TERMINATION;
+
+// Asserts that you cannot pass the setter 
+// Note: maxSigFigs must be > 3 for this implementation
+- (void)testFloatStringSetter:(SEL)setter onObject:(id)obj withMaxFigures:(NSUInteger)maxSigFigs;
 
 @end
