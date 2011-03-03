@@ -131,6 +131,58 @@ NSString * randomInvalidURLString(int stringLength) {
 #pragma -
 #pragma Reusable Test Components
 
+- (void)resetTestObjects {
+    IFChargeRequest *newRequest = [[IFChargeRequest alloc] init];
+    self.testRequest = newRequest;
+    [newRequest release];
+
+    IFChargeResponse *newResponse = [[IFChargeResponse alloc] init];
+    self.testResponse = newResponse;
+    [newResponse release];
+}
+
+- (void)testFloatStringSetter:(SEL)setter onObject:(id)obj withMaxFigures:(NSUInteger)maxFigs {
+    // I know this isnt a catch-all, but we're always dealing with > 3 sig figs.
+    if (maxFigs < 3) [NSException raise:NSInvalidArgumentException format:@"You're going to need more significant figures than 3."];
+    if (![obj respondsToSelector:setter])
+        [NSException raise:NSInvalidArgumentException format:@"Object %@ does not respond to email-address-setting selector %@", obj, NSStringFromSelector(setter)];
+
+    NSMutableString *max = [[NSMutableString alloc] initWithString:@".00"];
+    int zeroCount = maxFigs - 3;
+    for (int i=0; i < zeroCount; i++) {
+        [max insertString:@"0" atIndex:0];
+    }
+    NSMutableString *min = [max mutableCopy];
+    NSMutableString *tooLow = [max mutableCopy];
+    NSMutableString *tooHighNoDecimal = [max mutableCopy];
+    NSMutableString *tooHigh = [max mutableCopy];
+    NSMutableString *tooLowNoDecimal;
+
+    [max insertString:@"1" atIndex:0];
+    [min insertString:@"-1" atIndex:0];
+    [tooHigh insertString:@"10" atIndex:0];
+    [tooLow insertString:@"-10" atIndex:0];
+    tooHighNoDecimal = [tooHigh mutableCopy];
+    tooLowNoDecimal = [tooLow mutableCopy];
+    [tooHighNoDecimal deleteCharactersInRange:NSMakeRange([tooHighNoDecimal length]-3, 3)];
+    [tooLowNoDecimal deleteCharactersInRange:NSMakeRange([tooLowNoDecimal length]-3, 3)];
+
+    // Test the field's low/high passing vals and low/high failing vals
+    STAssertNoThrow([obj performSelector:setter withObject:min], @"Passing %@ to %@ of %@ should not raise an exception here.", min, NSStringFromSelector(setter), obj);
+    STAssertNoThrow([obj performSelector:setter withObject:max], @"Passing %@ to %@ of %@ should not raise an exception here.", max, NSStringFromSelector(setter), obj);
+    STAssertThrows([obj performSelector:setter withObject:tooLow], @"Passing %@ to %@ of %@ should raise an exception here.", tooLow, NSStringFromSelector(setter), obj);
+    STAssertThrows([obj performSelector:setter withObject:tooHigh], @"Passing %@ to %@ of %@ should raise an exception here.", tooHigh, NSStringFromSelector(setter), obj);
+    STAssertThrows([obj performSelector:setter withObject:tooLowNoDecimal], @"Passing %@ to %@ of %@ should raise an exception here.", tooLow, NSStringFromSelector(setter), obj);
+    STAssertThrows([obj performSelector:setter withObject:tooHighNoDecimal], @"Passing %@ to %@ of %@ should raise an exception here.", tooHigh, NSStringFromSelector(setter), obj);
+
+    [max release];
+    [min release];
+    [tooHigh release];
+    [tooLow release];
+    [tooHighNoDecimal release];
+    [tooLowNoDecimal release];
+}
+
 - (void)testNoSymbolsTextFieldSetter:(SEL)setter getter:(SEL)getter onObject:(id)obj withMaxLength:(NSUInteger)maxLength {
     [self testTextSetter:setter getter:getter onObject:obj withMaxLength:maxLength forbiddingCharacterSets:[NSCharacterSet symbolCharacterSet], nil];
 }

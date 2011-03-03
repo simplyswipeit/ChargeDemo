@@ -140,7 +140,7 @@ NSString* IFEncodeURIComponent( NSString* s )
 #endif
 
 @interface IFChargeMessage ()
-@property (readwrite,copy) NSString* amount;
+@property (readwrite,copy) NSString* amount; // nonatomic because setter is overridden
 @property (readwrite,copy) NSString* subtotal;
 @property (readwrite,copy) NSString* tip;
 @property (readwrite,copy) NSString* tax;
@@ -155,7 +155,6 @@ NSString* IFEncodeURIComponent( NSString* s )
 
 
 @implementation IFChargeMessage
-@synthesize amount             = _amount;
 @synthesize subtotal           = _subtotal;
 @synthesize tip                = _tip;
 @synthesize tax                = _tax;
@@ -298,6 +297,17 @@ static NSNumberFormatter *chargeAmountFormatter_;
 
 - (BOOL)amountIsSet {
     return (_amount) ? YES : NO;
+}
+
+- (void)setAmount:(NSString *)amount {
+    @synchronized(self) // (readonly,copy)
+    {
+        if (_amount != amount)
+        {
+            [amount release];
+            _amount = [amount copy];
+        }
+    }
 }
 
 - (NSString*)amount {

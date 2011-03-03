@@ -40,7 +40,7 @@ extern NSString *const IFDisallowedCharacterException;
 // setting the amount subfields below. If set directly, all subfield
 // values will be ignored, otherwise the getter method will calculate
 // the amount using the subfields.
-@property (readonly,copy) NSString* amount;
+@property (readonly,copy) NSString* amount; // nonatomic because setter is overridden
 @property (readonly,assign) BOOL amountIsSet;        // TODO: doco
 
 // amount subfields - A breakdown of the amount of the transaction.
