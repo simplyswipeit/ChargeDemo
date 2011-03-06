@@ -339,7 +339,7 @@ double const AMOUNT_FIELD_MIN = -9999999999999.99;
     @synchronized(self) {
         // return the amount if set explicitly
         if (_amount) {
-            dollarString = _amount;
+            dollarString = [_amount retain];
         } else {
             // calculate the amount using the subfields
             float sum = 0.f;
@@ -351,7 +351,7 @@ double const AMOUNT_FIELD_MIN = -9999999999999.99;
             sum = subtotal__ + tax__ + tip__ + shipping__ - discount__;
             
             NSNumber *dollarNumber = [[NSNumber alloc] initWithFloat:sum];
-            dollarString = [chargeAmountFormatter_ stringFromNumber:dollarNumber];
+            dollarString = [[chargeAmountFormatter_ stringFromNumber:dollarNumber] retain];
             [dollarNumber release];
         }
     }
