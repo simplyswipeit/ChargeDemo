@@ -454,6 +454,28 @@ double const AMOUNT_FIELD_MIN = -9999999999999.99;
     return [result autorelease];
 }
 
+- (void)setCurrency:(NSString *)currency {
+    [self checkFloatStringSize:currency];
+    @synchronized(self) // (readonly,copy)
+    {
+        if (_currency != currency) {
+            [_currency release];
+            _currency = [currency copy];
+        }
+    }
+}
+
+- (NSString*)currency {
+    id result;
+    @synchronized(self) {
+        result = (_currency && [_currency length] > 0) ? [_currency retain] : IF_CHARGE_DEFAULT_CURRENCY;
+    }
+    return [result autorelease];
+}
+
+#pragma -
+#pragma Memory Management
+
 - (void) dealloc {
     self.amount = nil;
     self.subtotal = nil;

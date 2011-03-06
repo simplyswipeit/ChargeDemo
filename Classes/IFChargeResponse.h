@@ -101,5 +101,3 @@ typedef enum {
 #define IF_RESPONSE_CAN_NOT_OPEN_URL_TITLE   ( NSLocalizedString( @"Unable to return to application.", nil ) )
 
 #define IF_CHARGE_CARD_NUMBER_MASK @"X"
-
-#define IF_CHARGE_DEFAULT_CURRENCY @"USD"
