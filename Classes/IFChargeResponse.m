@@ -226,18 +226,6 @@ static NSDictionary* _responseCodes;
             0 != [_discount length]);
 }
 
-- (NSString*)currency
-{
-    if ( 0 == [_currency length] && (0 != [_amount length] || [self amountSubfieldsAreSet]) )
-    {
-        return IF_CHARGE_DEFAULT_CURRENCY;
-    }
-    else
-    {
-        return _currency;
-    }
-}
-
 static NSNumberFormatter *chargeAmountFormatter_;
 +(NSNumberFormatter*)chargeAmountFormatter {
     if (!chargeAmountFormatter_) {

@@ -19,6 +19,7 @@ extern NSString *const IFDisallowedCharacterException;
 
 #define IF_CHARGE_MESSAGE_FIELD_PREFIX @"ifcc_"
 #define IF_CHARGE_NONCE_KEY @"ifcc_request_nonce"
+#define IF_CHARGE_DEFAULT_CURRENCY @"USD"
 
 @interface IFChargeMessage : NSObject {
     NSString* _amount;
@@ -56,7 +57,7 @@ extern NSString *const IFDisallowedCharacterException;
 @property (readonly,copy) NSString* discount;
 
 // currency - The currency code of the amount. (E.g. USD for US Dollars)
-// 3 characters.
+// 3 characters. Defaults to USD.
 @property (readonly,copy) NSString* currency;
 
 // extraParams - This dictionary contains any unrecognized query
