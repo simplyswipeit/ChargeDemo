@@ -69,7 +69,7 @@ static NSDictionary* _responseCodes;
 @property (readwrite,copy)   NSString*     cardType;
 @property (readwrite,copy)   NSString*     currency;
 @property (readwrite,retain) NSDictionary* extraParams;
-@property (readwrite,retain) NSString* baseURL;
+@property (readwrite,retain) NSString*     baseURL;
 @property (readwrite,copy)   NSString*     redactedCardNumber;
 @property (readwrite,copy)   NSString*     responseType;
 @property (readwrite,assign) IFChargeResponseCode responseCode;
@@ -148,7 +148,6 @@ static NSDictionary* _responseCodes;
 
 // Display a dialog
 - (void)unableToOpenURL {
-    [super unableToOpenURL]; // releases pre-delay retains.
     [[[[UIAlertView alloc]
        initWithTitle:IF_RESPONSE_CAN_NOT_OPEN_URL_TITLE
        message:IF_RESPONSE_CAN_NOT_OPEN_URL_MESSAGE
@@ -156,12 +155,18 @@ static NSDictionary* _responseCodes;
        cancelButtonTitle:IF_RESPONSE_CAN_NOT_OPEN_URL_BUTTON
        otherButtonTitles:nil
        ] autorelease] show];
+    [super unableToOpenURL]; // releases self.
 }
 
 - (id)initWithChargeRequest:(IFChargeRequest*)request responseCode:(IFChargeResponseCode)responseCode cardNumber:(NSString*)cardNumber cardType:(NSString*)cardType
 {
     if ((self = [super init])) {
-        // TODO: assert that there be a request and response code
+        // assert that there be a request
+        if (!request)
+        {
+            [NSException raise:NSInvalidArgumentException
+                        format:@"Could not init with request: did not receive a request."];
+        }
         
         if (responseCode == kIFChargeResponseCodeApproved)
         {
@@ -291,6 +296,10 @@ static NSNumberFormatter *chargeAmountFormatter_;
                          format:@"Bad URL Request: failure should not contain transaction info"];
         }
     }
+}
+
+- (NSString*)description {
+    return [NSString stringWithFormat:@"IFChargeResponse (%p)", self];
 }
 
 - (void)dealloc

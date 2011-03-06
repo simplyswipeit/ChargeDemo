@@ -75,7 +75,7 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 
 - (NSString*)createAndStoreNonce;
 
-@property (readwrite,retain) NSDictionary* extraParams;  // TODO: doco
+@property (readwrite,retain) NSDictionary* extraParams;
 @property (readwrite,retain) NSString* nonce;
 @property (readwrite,retain) NSString* baseURL;
 @end
@@ -174,7 +174,7 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 }
 
 // Create the appropriate request URL based on the current property
-// values. // TODO: more specific doco
+// values. 
 - (NSURL*)requestURL
 {
     self.baseURL = (_requestBaseURI) ? _requestBaseURI : IF_CHARGE_API_BASE_URI;
@@ -242,8 +242,8 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
 #endif
 
 - (void)unableToOpenURL {
-    [super unableToOpenURL];
     [self creditCardTerminalNotInstalled];
+    [super unableToOpenURL]; // releases self.
 }
 
 - (void)dealloc

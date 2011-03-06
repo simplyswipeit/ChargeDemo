@@ -40,8 +40,12 @@ extern NSString *const IFDisallowedCharacterException;
 // setting the amount subfields below. If set directly, all subfield
 // values will be ignored, otherwise the getter method will calculate
 // the amount using the subfields.
-@property (readonly,copy) NSString* amount; // nonatomic because setter is overridden
-@property (readonly,assign) BOOL amountIsSet;        // TODO: doco
+@property (readonly,copy) NSString* amount;
+
+// amountIsSet - Indicates that the amount property has been set
+// explicitly, and is overriding the use of any of the amount subfields
+// (ie subtotal, tip, etc.).
+@property (readonly,assign) BOOL amountIsSet;
 
 // amount subfields - A breakdown of the amount of the transaction.
 // These are strings of the same form as the amount property.
@@ -71,7 +75,12 @@ extern NSString *const IFDisallowedCharacterException;
 
 @property (readonly,retain) NSString* nonce;
 
-@property (readonly,retain) NSString* baseURL; // TODO: doco
+// baseURL - Used internally to set the beginning of requestURL.
+// In IFChargeRequest, this value defaults to IF_CHARGE_API_BASE_URI, but can be
+// customized externally by setting requestBaseURI. When you init an
+// IFChargeResponse using an IFChargeRequest, if the Request has a returnURL set
+// then this value will be copied into the Response's baseURL.
+@property (readonly,retain) NSString* baseURL;
 
 // initWithURL - Pass the URL that you receive in
 // application:handleOpenURL: and the resulting object will have the
@@ -88,15 +97,24 @@ extern NSString *const IFDisallowedCharacterException;
 
 #if TARGET_OS_IPHONE
 
-// submit - Invokes the URL for this message. If Credit Card Terminal       // TODO: update doco
-// is installed, your app will terminate and Credit Card Terminal will
-// run. If not, either creditCardTerminalNotInstalled will be sent to
-// the delegate or a default UIAlert will be displayed.
+// submit - Invokes the URL for this message. For IFChargeRequest, if Credit
+// Card Terminal is installed, your app will terminate and Credit Card Terminal
+// will run. If not, either creditCardTerminalNotInstalled will be sent to
+// the delegate or a default UIAlert will be displayed. For IFChargeResponse,
+// if the OS is able to resolve the returnURL, the charge processing
+// app will terminate and your app will run again. If not, a default
+// UIAlert will be displayed.
 - (void)submit;
 
 #endif
 
-- (void)unableToOpenURL; // TODO: doco
+// unableToOpenURL - Called when submit fails because the device could
+// not find an application to handle the message's requestURL. In
+// IFChargeRequest, this method will will try to invoke its delegate's
+// creditCardTerminalNotInstalled. If that method is not defined, or if
+// unableToOpenURL gets called on an instance of IFChargeResponse, the user
+// will be presented with an alert summarizing the issue.
+- (void)unableToOpenURL;
 
 + (NSArray*)knownFields;
 

@@ -81,7 +81,9 @@ typedef enum {
 // responseCode - One of the IFChargeResponseCode enum values.
 @property (readonly,assign) IFChargeResponseCode responseCode;
 
-// TODO: doco
+// initWithChargeRequest - Copies values from the request to a new
+// response and redacts the provided card number. If the response code
+// is kIFChargeResponseCodeApproved, then the card number must be set.
 - (id)initWithChargeRequest:(IFChargeRequest*)request responseCode:(IFChargeResponseCode)responseCode cardNumber:(NSString*)cardNumber cardType:(NSString*)cardType;
 
 + (NSDictionary*)responseCodeMapping;

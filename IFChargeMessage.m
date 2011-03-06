@@ -140,7 +140,7 @@ NSString* IFEncodeURIComponent( NSString* s )
 #endif
 
 @interface IFChargeMessage ()
-@property (readwrite,copy) NSString* amount; // nonatomic because setter is overridden
+@property (readwrite,copy) NSString* amount;
 @property (readwrite,copy) NSString* subtotal;
 @property (readwrite,copy) NSString* tip;
 @property (readwrite,copy) NSString* tax;

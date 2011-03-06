@@ -34,6 +34,13 @@
     // invoked.
     IFChargeRequest* chargeRequest = [[[IFChargeRequest alloc] init] autorelease];
 
+    // Choosing a charge processing application.
+    //
+    // To use a credit card processor other than Credit Card Terminal, first
+    // make sure that it supports the use of IFChargeMessage, then provide the
+    // processing application's base URI to this field.
+    chargeRequest.requestBaseURI = @"swipeit://com.macally.swipeit/";   
+
     // 2-way Integration
     //
     // By supplying the returnURL parameter, we give Credit Card
@@ -83,9 +90,6 @@
     chargeRequest.phone          = @"555-1212";
     chargeRequest.state          = @"HI";
     chargeRequest.zip            = @"98021";
-
-    // TODO: doco
-    chargeRequest.requestBaseURI = @"swipeit://com.macally.swipeit/";
 
     // The IFChargeRequest object will retain itself and any specified
     // delegate for the duration of the request/timeout period, so

@@ -16,14 +16,7 @@
 #pragma Setup
 
 - (void)setUp {
-    IFChargeRequest *newRequest = [[IFChargeRequest alloc] init];
-    newRequest.description = @"Test Request";
-    self.testRequest = newRequest;
-    [newRequest release];
-
-    IFChargeResponse *newResponse = [[IFChargeResponse alloc] init];
-    self.testResponse = newResponse;
-    [newResponse release];
+    [self resetTestObjects];
 }
 
 - (void)tearDown {
@@ -133,6 +126,7 @@ NSString * randomInvalidURLString(int stringLength) {
 
 - (void)resetTestObjects {
     IFChargeRequest *newRequest = [[IFChargeRequest alloc] init];
+    newRequest.description = @"Test Request";
     self.testRequest = newRequest;
     [newRequest release];
 
@@ -213,7 +207,7 @@ NSString * randomInvalidURLString(int stringLength) {
                    obj, IFInvalidArgumentLengthException, NSStringFromSelector(setter), maxLength);
     
 
-    // TODO: Test that an improperly formatted address (per RFC 2822) of valid length
+    // Test that an improperly formatted address (per RFC 2822) of valid length
     // may NOT be set, and raises NSInvalidArgumentException
     testAddress = randomEmailAddress(NO, maxLength);
     STAssertThrows([obj performSelector:setter withObject:testAddress], @"Object '%@' should raise %@ when %@ is passed an address not conforming to RFC 2822",

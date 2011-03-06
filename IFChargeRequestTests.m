@@ -125,9 +125,4 @@
     STAssertEqualObjects(newRequest.delegate, self, @"Initting an IFChargeRequest with delegate self should set the delegate to self. Instead, it was %@", newRequest.delegate);
 }
 
-// TODO: Test url rolling, unrolling
-    // TODO: set values, make a URL, init another object from the url - check values
-
-// TODO: Check the attributes of the public properties
-
 @end

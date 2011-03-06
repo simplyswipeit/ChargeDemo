@@ -11,8 +11,6 @@
 
 @implementation IFChargeResponseTests
 
-//TODO: check the attributes of the public properties
-
 - (void)testChargeRequestInit {
     // Roll up a dummy IFChargeRequest, use it to init a ChargeResponse
     testRequest_.amount = nil;
@@ -80,8 +78,9 @@
                    @"Redacted card number should be the same length as the original.\nOld: '%@'\nNew: '%@'",
                    testCardNum, newResp.redactedCardNumber);
 
-    int maskCheckLimit = [testCardNum length] - 3;
-    STAssertEquals([testCardNum compare:newResp.redactedCardNumber options:NSNumericSearch range:NSMakeRange(maskCheckLimit, 4)], NSOrderedSame,
+    int maskCheckLimit = [testCardNum length] - 4;
+    NSRange unmaskedRange = NSMakeRange(maskCheckLimit, 4);
+    STAssertEquals([testCardNum compare:[newResp.redactedCardNumber substringWithRange:unmaskedRange] options:NSNumericSearch range:unmaskedRange], NSOrderedSame,
                  @"Last four of redacted card number should be the same as the original.\nOld: '%@'\nNew: '%@'",
                  testCardNum, newResp.redactedCardNumber);
 
