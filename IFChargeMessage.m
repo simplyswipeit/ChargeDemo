@@ -10,6 +10,8 @@
 NSString *const IFInvalidArgumentLengthException = @"IFInvalidArgumentLengthException";
 NSString *const IFDisallowedCharacterException = @"IFDisallowedCharacterException";
 
+
+
 #ifdef IF_INTERNAL
 
 #import "GTMRegex.h"   // for [NSString -gtm_matchesPattern:]
@@ -112,7 +114,7 @@ static float floatCheck(float theFloat) {
     // make sure the float value doesn't indicate an overflow.
     if (theFloat == HUGE_VAL || theFloat == -HUGE_VAL)
         [NSException raise:NSInvalidArgumentException
-                    format:@"extraParams dictionary keys and values must all be strings"];
+                    format:@"String could not be converted to a float value."];
     return theFloat;
 }
 
@@ -151,6 +153,7 @@ NSString* IFEncodeURIComponent( NSString* s )
 @property (readwrite,retain) NSString* nonce;
 @property (readwrite,retain) NSString* baseURL;
 
+- (void)checkFloatStringSize:(NSString*)floatString;
 @end
 
 
@@ -295,39 +298,160 @@ static NSNumberFormatter *chargeAmountFormatter_;
     return nil;
 }
 
+#pragma -
+#pragma Amount Fields
+
+double const AMOUNT_FIELD_MAX = 9999999999999.99;
+double const AMOUNT_FIELD_MIN = -9999999999999.99;
+
+- (void)checkFloatStringSize:(NSString*)floatString {
+    double testVal = [floatString doubleValue];
+    
+    // make sure the number could be initted
+    floatCheck(testVal);
+    
+    // make sure the nubmer isn't too high or too low
+    if (testVal > AMOUNT_FIELD_MAX) {
+        [NSException raise:NSInvalidArgumentException format:@"You cannot set amount fields to values higher than %f", AMOUNT_FIELD_MAX];
+    } else if (testVal < AMOUNT_FIELD_MIN) {
+        [NSException raise:NSInvalidArgumentException format:@"You cannot set amount fields to values lower than %f", AMOUNT_FIELD_MIN];
+    }
+}
+
 - (BOOL)amountIsSet {
     return (_amount) ? YES : NO;
 }
 
 - (void)setAmount:(NSString *)amount {
+    [self checkFloatStringSize:amount];
     @synchronized(self) // (readonly,copy)
     {
-        if (_amount != amount)
-        {
-            [amount release];
+        if (_amount != amount) {
+            [_amount release];
             _amount = [amount copy];
         }
     }
 }
 
 - (NSString*)amount {
-    // return the amount if set explicitly
-    if (_amount) return _amount;
-    
-    // calculate the amount using the subfields
-    float sum = 0.f;
-    float subtotal__ = floatCheck([self.subtotal floatValue]);
-    float tax__      = floatCheck([self.tax      floatValue]);
-    float tip__      = floatCheck([self.tip      floatValue]);
-    float shipping__ = floatCheck([self.shipping floatValue]);
-    float discount__ = floatCheck([self.discount floatValue]);
-    sum = subtotal__ + tax__ + tip__ + shipping__ - discount__;
-    
-    NSNumber *dollarNumber = [[NSNumber alloc] initWithFloat:sum];
-    NSString *dollarString = [chargeAmountFormatter_ stringFromNumber:dollarNumber];
-    [dollarNumber release];
-    
-    return dollarString;
+    NSString *dollarString;
+
+    @synchronized(self) {
+        // return the amount if set explicitly
+        if (_amount) {
+            dollarString = [_amount retain];
+        } else {
+            // calculate the amount using the subfields
+            float sum = 0.f;
+            float subtotal__ = floatCheck([self.subtotal floatValue]);
+            float tax__      = floatCheck([self.tax      floatValue]);
+            float tip__      = floatCheck([self.tip      floatValue]);
+            float shipping__ = floatCheck([self.shipping floatValue]);
+            float discount__ = floatCheck([self.discount floatValue]);
+            sum = subtotal__ + tax__ + tip__ + shipping__ - discount__;
+            
+            NSNumber *dollarNumber = [[NSNumber alloc] initWithFloat:sum];
+            dollarString = [[chargeAmountFormatter_ stringFromNumber:dollarNumber] retain];
+            [dollarNumber release];
+        }
+    }
+
+    return [dollarString autorelease];
+}
+
+- (void)setSubtotal:(NSString *)subtotal {
+    [self checkFloatStringSize:subtotal];
+    @synchronized(self) // (readonly,copy)
+    {
+        if (_subtotal != subtotal) {
+            [_subtotal release];
+            _subtotal = [subtotal copy];
+        }
+    }
+}
+
+- (NSString*)subtotal {
+    id result;
+    @synchronized(self) {
+        result = [_subtotal retain];
+    }
+    return [result autorelease];
+}
+
+- (void)setTip:(NSString *)tip {
+    [self checkFloatStringSize:tip];
+    @synchronized(self) // (readonly,copy)
+    {
+        if (_tip != tip) {
+            [_tip release];
+            _tip = [tip copy];
+        }
+    }
+}
+
+- (NSString*)tip {
+    id result;
+    @synchronized(self) {
+        result = [_tip retain];
+    }
+    return [result autorelease];
+}
+
+- (void)setTax:(NSString *)tax {
+    [self checkFloatStringSize:tax];
+    @synchronized(self) // (readonly,copy)
+    {
+        if (_tax != tax) {
+            [_tax release];
+            _tax = [tax copy];
+        }
+    }
+}
+
+- (NSString*)tax {
+    id result;
+    @synchronized(self) {
+        result = [_tax retain];
+    }
+    return [result autorelease];
+}
+
+- (void)setShipping:(NSString *)shipping {
+    [self checkFloatStringSize:shipping];
+    @synchronized(self) // (readonly,copy)
+    {
+        if (_shipping != shipping) {
+            [_shipping release];
+            _shipping = [shipping copy];
+        }
+    }
+}
+
+- (NSString*)shipping {
+    id result;
+    @synchronized(self) {
+        result = [_shipping retain];
+    }
+    return [result autorelease];
+}
+
+- (void)setDiscount:(NSString *)discount {
+    [self checkFloatStringSize:discount];
+    @synchronized(self) // (readonly,copy)
+    {
+        if (_discount != discount) {
+            [_discount release];
+            _discount = [discount copy];
+        }
+    }
+}
+
+- (NSString*)discount {
+    id result;
+    @synchronized(self) {
+        result = [_discount retain];
+    }
+    return [result autorelease];
 }
 
 - (void) dealloc {
