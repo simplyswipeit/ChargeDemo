@@ -82,7 +82,6 @@
 
 // Test that the currency defaults to IF_CHARGE_DEFAULT_CURRENCY
 - (void)testCurrencyDefault {
-    NSLog(@"c is %@", self.testResponse.currency);
     STAssertEqualObjects(IF_CHARGE_DEFAULT_CURRENCY, self.testResponse.currency,
                          @"Property currency should default to '%@,' but instead it was '%@'",
                          IF_CHARGE_DEFAULT_CURRENCY, testResponse_.currency);

@@ -169,8 +169,14 @@ NSString * randomInvalidURLString(int stringLength) {
     [self testTextSetter:setter getter:getter onObject:obj withMaxLength:maxLength forbiddingCharacterSets:[NSCharacterSet symbolCharacterSet], nil];
 }
 
-- (void)testNumbersOnlyTextFieldSetter:(SEL)setter getter:(SEL)getter onObject:(id)obj withMaxLength:(NSUInteger)maxLength {
-    [self testTextSetter:setter getter:getter onObject:obj withMaxLength:maxLength forbiddingCharacterSets:[NSCharacterSet decimalDigitCharacterSet], nil];
+static NSString *validPhoneCharacters = @"0123456789- ";
+static NSCharacterSet *phoneForbiddenCharacterSet;
+- (void)testPhoneNumberTextFieldSetter:(SEL)setter getter:(SEL)getter onObject:(id)obj withMaxLength:(NSUInteger)maxLength {
+    if (!phoneForbiddenCharacterSet) {
+        phoneForbiddenCharacterSet = [[[NSCharacterSet characterSetWithCharactersInString:validPhoneCharacters] invertedSet] retain];
+    }
+
+    [self testTextSetter:setter getter:getter onObject:obj withMaxLength:maxLength forbiddingCharacterSets:phoneForbiddenCharacterSet, nil];
 }
 
 - (void)testEmailTextFieldSetter:(SEL)setter getter:(SEL)getter onObject:(id)obj withMaxLength:(NSUInteger)maxLength {

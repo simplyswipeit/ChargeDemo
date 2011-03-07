@@ -460,7 +460,7 @@ double const AMOUNT_FIELD_MIN = -9999999999999.99;
         // raise exception if necessary
         if ([illegals count] > 0) {
             [NSException raise:IFDisallowedCharacterException
-                        format:@"The text argument contained the following disallowed characters: @%", [illegals autorelease]];
+                        format:@"The text argument contained the following disallowed characters: %@", [illegals autorelease]];
         }
 
         [illegals release];

@@ -366,8 +366,14 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
     getObject_Atomic(_lastName);
 }
 
+static NSString *validPhoneCharacters = @"0123456789- ";
+static NSCharacterSet *phoneForbiddenCharacterSet;
 - (void)setPhone:(NSString *)phone {
-    [self validateTextArgument:phone withMaxLength:Phone_MAX_LENGTH forbiddenCharacterSets:[NSCharacterSet decimalDigitCharacterSet], nil];
+    if (!phoneForbiddenCharacterSet) {
+        phoneForbiddenCharacterSet = [[[NSCharacterSet characterSetWithCharactersInString:validPhoneCharacters] invertedSet] retain];
+    }
+
+    [self validateTextArgument:phone withMaxLength:Phone_MAX_LENGTH forbiddenCharacterSets:phoneForbiddenCharacterSet, nil];
     setObject_AtomicCopy(_phone, phone);
 }
 - (NSString*)phone {

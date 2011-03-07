@@ -51,7 +51,7 @@
 }
 
 - (void)testPhone {
-    [self testNumbersOnlyTextFieldSetter:@selector(setPhone:) getter:@selector(phone) onObject:testRequest_ withMaxLength:25];
+    [self testPhoneNumberTextFieldSetter:@selector(setPhone:) getter:@selector(phone) onObject:testRequest_ withMaxLength:25];
 }
 
 - (void)testState {
