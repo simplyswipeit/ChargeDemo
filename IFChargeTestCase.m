@@ -78,18 +78,6 @@ NSMutableString * randomStringFromCharacterSet(NSCharacterSet *characterSet, int
     return workingString;
 }
 
-// This regular expression, from http://cocoawithlove.com/2009/06/verifying-that-string-is-email-address.html
-// is adapted from a version at http://www.regular-expressions.info/email.html, and
-// is a complete verification of RFC 2822. I have modified it to allow capital letters.
-NSString *const emailRegEx =
-@"(?:[a-zA-Z0-9!#$%\\&'*+/=?\\^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%\\&'*+/=?\\^_`{|}"
-@"~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\"
-@"x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-"
-@"z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\\[(?:(?:25[0-5"
-@"]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-"
-@"9][0-9]?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21"
-@"-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
-
 NSMutableString * randomEmailAddress(BOOL shouldBeValid, int stringLength) {
     if (stringLength < 8) [NSException raise:NSInvalidArgumentException format:@"Minimum random email address stringLength for this method is 8"];
     NSPredicate *emailTestPredicate = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", emailRegEx]; // x@xxx.xx
@@ -220,7 +208,7 @@ NSString * randomInvalidURLString(int stringLength) {
     // Passing nil as firstSet prevents forbidden character testing
     BOOL testCharacters = (firstSet != nil);
     BOOL testLength = (maxLength != 0);
-    NSUInteger lengthLimit = testLength ? 256 : maxLength;
+    NSUInteger lengthLimit = testLength ? maxLength : 256;
 
     // Test that the object responds to both selectors
     STAssertTrue([obj respondsToSelector:setter], @"Object %@ does not respond to text-setting selector %@", obj, NSStringFromSelector(setter));

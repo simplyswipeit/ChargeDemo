@@ -64,6 +64,22 @@
 
 static NSArray* _fieldList;
 
+const int ReturnAppName_MAX_LENGTH  = 0; // 0 -> no max.
+const int ReturnURL_MAX_LENGTH      = 0; // 0 -> no max.
+const int RequestBaseURI_MAX_LENGTH = 0; // 0 -> no max.
+const int Address_MAX_LENGTH        = 60;
+const int City_MAX_LENGTH           = 40;
+const int Company_MAX_LENGTH        = 50;
+const int Country_MAX_LENGTH        = 60;
+const int Description_MAX_LENGTH    = 255;
+const int Email_MAX_LENGTH          = 255;
+const int FirstName_MAX_LENGTH      = 50;
+const int InvoiceNumber_MAX_LENGTH  = 20;
+const int LastName_MAX_LENGTH       = 50;
+const int Phone_MAX_LENGTH          = 25;
+const int State_MAX_LENGTH          = 40;
+const int Zip_MAX_LENGTH            = 20;
+
 // Base64 isn't provided in Cocoa Touch, and I don't want to depend on
 // an external Base64 library, so instead of base64 encoding a random
 // value, I'll instead choose (web safe) base64-characters at random.
@@ -245,6 +261,138 @@ static char _nonceAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
     [self creditCardTerminalNotInstalled];
     [super unableToOpenURL]; // releases self.
 }
+
+#pragma -
+#pragma Atomic Getters/Setters
+
+- (void)setReturnAppName:(NSString *)returnAppName {
+    [self validateTextArgument:returnAppName withMaxLength:ReturnAppName_MAX_LENGTH forbiddenCharacterSets: nil];
+    setObject_AtomicCopy(_returnAppName, returnAppName);
+}
+- (NSString*)returnAppName {
+    getObject_Atomic(_returnAppName);
+}
+
+- (void)setReturnURL:(NSString *)returnURL {
+    [self validateURLString:returnURL];
+    setObject_AtomicCopy(_returnURL, returnURL);
+}
+- (NSString*)returnURL {
+    getObject_Atomic(_returnURL);
+}
+
+- (void)setRequestBaseURI:(NSString *)requestBaseURI {
+    [self validateURLString:requestBaseURI];
+    if ([requestBaseURI rangeOfString:@"?"].location != NSNotFound) {
+        [NSException raise:NSInvalidArgumentException
+                    format:@"requestBaseURI may not include the character '?'"];
+    }
+    setObject_AtomicCopy(_requestBaseURI, requestBaseURI);
+}
+- (NSString*)requestBaseURI {
+    getObject_Atomic(_requestBaseURI);
+}
+
+- (void)setAddress:(NSString *)address {
+    [self validateTextArgument:address withMaxLength:Address_MAX_LENGTH forbiddenCharacterSets:[NSCharacterSet symbolCharacterSet], nil];
+    setObject_AtomicCopy(_address, address);
+}
+- (NSString*)address {
+    getObject_Atomic(_address);
+}
+
+- (void)setCity:(NSString *)city {
+    [self validateTextArgument:city withMaxLength:City_MAX_LENGTH forbiddenCharacterSets:[NSCharacterSet symbolCharacterSet], nil];
+    setObject_AtomicCopy(_city, city);
+}
+- (NSString*)city {
+    getObject_Atomic(_city);
+}
+
+- (void)setCompany:(NSString *)company {
+    [self validateTextArgument:company withMaxLength:Company_MAX_LENGTH forbiddenCharacterSets:[NSCharacterSet symbolCharacterSet], nil];
+    setObject_AtomicCopy(_company, company);
+}
+- (NSString*)company {
+    getObject_Atomic(_company);
+}
+
+- (void)setCountry:(NSString *)country {
+    [self validateTextArgument:country withMaxLength:Country_MAX_LENGTH forbiddenCharacterSets:[NSCharacterSet symbolCharacterSet], nil];
+    setObject_AtomicCopy(_country, country);
+}
+- (NSString*)country {
+    getObject_Atomic(_country);
+}
+
+- (void)setDescription:(NSString *)description {
+    [self validateTextArgument:description withMaxLength:Description_MAX_LENGTH forbiddenCharacterSets:[NSCharacterSet symbolCharacterSet], nil];
+    setObject_AtomicCopy(_description, description);
+}
+- (NSString*)description {
+    getObject_Atomic(_description);
+}
+
+- (void)setEmail:(NSString *)email {
+    [self validateTextArgument:email withMaxLength:Email_MAX_LENGTH forbiddenCharacterSets:nil];
+    [self validateEmailString:email];
+    setObject_AtomicCopy(_email, email);
+}
+- (NSString*)email {
+    getObject_Atomic(_email);
+}
+
+- (void)setFirstName:(NSString *)firstName {
+    [self validateTextArgument:firstName withMaxLength:FirstName_MAX_LENGTH forbiddenCharacterSets:[NSCharacterSet symbolCharacterSet], nil];
+    setObject_AtomicCopy(_firstName, firstName);
+}
+- (NSString*)firstName {
+    getObject_Atomic(_firstName);
+}
+
+- (void)setInvoiceNumber:(NSString *)invoiceNumber {
+    [self validateTextArgument:invoiceNumber withMaxLength:InvoiceNumber_MAX_LENGTH forbiddenCharacterSets:[NSCharacterSet symbolCharacterSet], nil];
+    setObject_AtomicCopy(_invoiceNumber, invoiceNumber);
+}
+- (NSString*)invoiceNumber {
+    getObject_Atomic(_invoiceNumber);
+}
+
+- (void)setLastName:(NSString *)lastName {
+    [self validateTextArgument:lastName withMaxLength:LastName_MAX_LENGTH forbiddenCharacterSets:[NSCharacterSet symbolCharacterSet], nil];
+    setObject_AtomicCopy(_lastName, lastName);
+}
+- (NSString*)lastName {
+    getObject_Atomic(_lastName);
+}
+
+- (void)setPhone:(NSString *)phone {
+    [self validateTextArgument:phone withMaxLength:Phone_MAX_LENGTH forbiddenCharacterSets:[NSCharacterSet decimalDigitCharacterSet], nil];
+    setObject_AtomicCopy(_phone, phone);
+}
+- (NSString*)phone {
+    getObject_Atomic(_phone);
+}
+
+- (void)setState:(NSString *)state {
+    [self validateTextArgument:state withMaxLength:State_MAX_LENGTH forbiddenCharacterSets:[NSCharacterSet symbolCharacterSet], nil];
+    setObject_AtomicCopy(_state, state);
+}
+- (NSString*)state {
+    getObject_Atomic(_state);
+}
+
+- (void)setZip:(NSString *)zip {
+    [self validateTextArgument:zip withMaxLength:Zip_MAX_LENGTH forbiddenCharacterSets:[NSCharacterSet symbolCharacterSet], nil];
+    setObject_AtomicCopy(_zip, zip);
+}
+- (NSString*)zip {
+    getObject_Atomic(_zip);
+}
+
+
+#pragma -
+#pragma Memory Management
 
 - (void)dealloc
 {

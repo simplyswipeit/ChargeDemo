@@ -20,6 +20,7 @@
 
 extern NSMutableString * randomStringFromCharacterSet(NSCharacterSet *characterSet, int stringLength);
 extern NSString * randomInvalidURLString(int stringLength);
+extern NSString *const emailRegEx;
 
 @interface IFChargeTestCase : SenTestCase {
     IFChargeRequest *testRequest_;

@@ -90,7 +90,7 @@
     [retrievedExtras release];
 
     // Test that the everything up to the query of the resulting URL matches the URL you passed in
-    STAssertEquals(retrievedBase, validURLString, @"Retrieved URL '%@' should match set url '%@'", retrievedBase, validURLString);
+    STAssertEqualObjects(retrievedBase, validURLString, @"Retrieved URL '%@' should match set url '%@'", retrievedBase, validURLString);
 
     // Test that you can NOT set extra params using a dictionary including a non-string key or value - should raise NSInvalidArgumentException
     STAssertThrows([testRequest_ setReturnURL:validURLString withExtraParams:invalidExtras1], @"Setting returnURL with extraParams %@ should raise %@", invalidExtras1, NSInvalidArgumentException);

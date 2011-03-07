@@ -32,6 +32,22 @@
 //
 #import "IFChargeMessage.h"
 
+extern const int ReturnAppName_MAX_LENGTH;
+extern const int ReturnURL_MAX_LENGTH;
+extern const int RequestBaseURI_MAX_LENGTH;
+extern const int Address_MAX_LENGTH;
+extern const int City_MAX_LENGTH;
+extern const int Company_MAX_LENGTH;
+extern const int Country_MAX_LENGTH;
+extern const int Description_MAX_LENGTH;
+extern const int Email_MAX_LENGTH;
+extern const int FirstName_MAX_LENGTH;
+extern const int InvoiceNumber_MAX_LENGTH;
+extern const int LastName_MAX_LENGTH;
+extern const int Phone_MAX_LENGTH;
+extern const int State_MAX_LENGTH;
+extern const int Zip_MAX_LENGTH;
+
 @interface IFChargeRequest : IFChargeMessage
 {
 @private
