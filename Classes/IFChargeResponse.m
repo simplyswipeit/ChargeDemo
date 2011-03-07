@@ -168,15 +168,18 @@ static NSDictionary* _responseCodes;
                         format:@"Could not init with request: did not receive a request."];
         }
         
+        // Swap the returnURL for the baseURL
+        self.baseURL = request.returnURL;
+
         if (responseCode == kIFChargeResponseCodeApproved)
         {
             // set the vars
+            self.amount = request.amount;
             self.subtotal = request.subtotal;
             self.tip = request.tip;
             self.tax = request.tax;
             self.shipping = request.shipping;
             self.discount = request.discount;
-            self.baseURL = request.returnURL;
 
             // assert that there be a card number
             if (!cardNumber)
@@ -278,7 +281,7 @@ static NSNumberFormatter *chargeAmountFormatter_;
     }
     else
     {
-        if ( nil != _amount || [self amountSubfieldsAreSet] || nil != _cardType || nil != _currency || nil != _redactedCardNumber )
+        if ( nil != _amount || [self amountSubfieldsAreSet] || nil != _cardType || nil != _redactedCardNumber )
         {
             [NSException raise:NSInvalidArgumentException
                          format:@"Bad URL Request: failure should not contain transaction info"];

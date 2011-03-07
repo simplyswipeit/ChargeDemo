@@ -155,7 +155,7 @@ void ReportError( NSString* message )
     }
     @catch ( NSException* e )
     {
-        ReportError( @"URL not valid charge response, abandoning the request!" );
+        ReportError( [NSString stringWithFormat:@"URL not valid charge response, abandoning the request! Exception: %@", [e reason] ]);
         return NO;
     }
     @finally
