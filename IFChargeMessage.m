@@ -10,7 +10,17 @@
 NSString *const IFInvalidArgumentLengthException = @"IFInvalidArgumentLengthException";
 NSString *const IFDisallowedCharacterException = @"IFDisallowedCharacterException";
 
-
+// This regular expression, from http://cocoawithlove.com/2009/06/verifying-that-string-is-email-address.html
+// is adapted from a version at http://www.regular-expressions.info/email.html, and
+// is a complete verification of RFC 2822. I have modified it to allow capital letters.
+NSString *const emailRegEx =
+@"(?:[a-zA-Z0-9!#$%\\&'*+/=?\\^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%\\&'*+/=?\\^_`{|}"
+@"~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\"
+@"x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-"
+@"z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\\[(?:(?:25[0-5"
+@"]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-"
+@"9][0-9]?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21"
+@"-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
 
 #ifdef IF_INTERNAL
 
@@ -117,6 +127,7 @@ static float floatCheck(float theFloat) {
                     format:@"String could not be converted to a float value."];
     return theFloat;
 }
+
 
 // CFURLCreateStringByAddingPercentEscapes by default leaves legal
 // URL characters alone, which is not what we want. So we'll specify
@@ -361,108 +372,48 @@ double const AMOUNT_FIELD_MIN = -9999999999999.99;
 
 - (void)setSubtotal:(NSString *)subtotal {
     [self checkFloatStringSize:subtotal];
-    @synchronized(self) // (readonly,copy)
-    {
-        if (_subtotal != subtotal) {
-            [_subtotal release];
-            _subtotal = [subtotal copy];
-        }
-    }
+    setObject_AtomicCopy(_subtotal, subtotal);
 }
-
 - (NSString*)subtotal {
-    id result;
-    @synchronized(self) {
-        result = [_subtotal retain];
-    }
-    return [result autorelease];
+    getObject_Atomic(_subtotal);
 }
 
 - (void)setTip:(NSString *)tip {
     [self checkFloatStringSize:tip];
-    @synchronized(self) // (readonly,copy)
-    {
-        if (_tip != tip) {
-            [_tip release];
-            _tip = [tip copy];
-        }
-    }
+    setObject_AtomicCopy(_tip, tip);
 }
-
 - (NSString*)tip {
-    id result;
-    @synchronized(self) {
-        result = [_tip retain];
-    }
-    return [result autorelease];
+    getObject_Atomic(_tip);
 }
 
 - (void)setTax:(NSString *)tax {
     [self checkFloatStringSize:tax];
-    @synchronized(self) // (readonly,copy)
-    {
-        if (_tax != tax) {
-            [_tax release];
-            _tax = [tax copy];
-        }
-    }
+    setObject_AtomicCopy(_tax, tax);
 }
-
 - (NSString*)tax {
-    id result;
-    @synchronized(self) {
-        result = [_tax retain];
-    }
-    return [result autorelease];
+    getObject_Atomic(_tax);
 }
 
 - (void)setShipping:(NSString *)shipping {
     [self checkFloatStringSize:shipping];
-    @synchronized(self) // (readonly,copy)
-    {
-        if (_shipping != shipping) {
-            [_shipping release];
-            _shipping = [shipping copy];
-        }
-    }
+    setObject_AtomicCopy(_shipping, shipping);
 }
-
 - (NSString*)shipping {
-    id result;
-    @synchronized(self) {
-        result = [_shipping retain];
-    }
-    return [result autorelease];
+    getObject_Atomic(_shipping);
 }
 
 - (void)setDiscount:(NSString *)discount {
     [self checkFloatStringSize:discount];
-    @synchronized(self) // (readonly,copy)
-    {
-        if (_discount != discount) {
-            [_discount release];
-            _discount = [discount copy];
-        }
-    }
+    setObject_AtomicCopy(_discount, discount);
+}
+- (NSString*)discount {
+    getObject_Atomic(_discount);
 }
 
-- (NSString*)discount {
-    id result;
-    @synchronized(self) {
-        result = [_discount retain];
-    }
-    return [result autorelease];
-}
 
 - (void)setCurrency:(NSString *)currency {
     [self checkFloatStringSize:currency];
-    @synchronized(self) // (readonly,copy)
-    {
-        if (_currency != currency) {
-            [_currency release];
-            _currency = [currency copy];
-        }
-    }
+    setObject_AtomicCopy(_currency, currency);
 }
 
 - (NSString*)currency {
@@ -471,6 +422,63 @@ double const AMOUNT_FIELD_MIN = -9999999999999.99;
         result = (_currency && [_currency length] > 0) ? [_currency retain] : IF_CHARGE_DEFAULT_CURRENCY;
     }
     return [result autorelease];
+}
+
+- (void)validateTextArgument:(NSString*)arg withMaxLength:(int)maxLength forbiddenCharacterSets:firstSet, ... {
+    // Passing 0 as maxLength prevents length limit testing.
+    // Passing nil as firstSet prevents forbidden character testing
+    if (maxLength != 0 && [arg length] > maxLength) {
+        [NSException raise:IFInvalidArgumentLengthException
+                    format:@"Argument '%@' is %d characters too long", arg, [arg length] - maxLength];
+    }
+
+    if (firstSet != nil) {
+        // merge the character sets
+        NSMutableCharacterSet *disallowedCharacterSet = [[firstSet mutableCopy] autorelease];
+        va_list argumentList;
+        id nextSet;
+
+        va_start(argumentList, firstSet);
+        while ((nextSet = va_arg(argumentList, id)))
+            [disallowedCharacterSet formUnionWithCharacterSet:nextSet];
+        va_end(argumentList);
+
+        // list all of the illegal characters
+        NSMutableArray *illegals = [[NSMutableArray alloc] init];
+        int argLength = [arg length];
+        NSRange searchRange = NSMakeRange(0, argLength);
+        NSRange resultRange = [arg rangeOfCharacterFromSet:disallowedCharacterSet options:0 range:searchRange];
+        while (resultRange.location != NSNotFound) {
+            NSString *illegalSubstring = [arg substringWithRange:resultRange];
+            if ([illegals indexOfObject:illegalSubstring] == NSNotFound)
+                [illegals addObject:[arg substringWithRange:resultRange]];
+            int newLoc = resultRange.location + resultRange.length;
+            searchRange = NSMakeRange(newLoc, argLength - newLoc);
+            resultRange = [arg rangeOfCharacterFromSet:disallowedCharacterSet options:0 range:searchRange];
+        }
+
+        // raise exception if necessary
+        if ([illegals count] > 0) {
+            [NSException raise:IFDisallowedCharacterException
+                        format:@"The text argument contained the following disallowed characters: %@", [illegals autorelease]];
+        }
+
+        [illegals release];
+    }
+}
+
+- (void)validateURLString:(NSString*)testString {
+    // Takes a string, sees if it can be turned into an nsurl.
+    if (![NSURL URLWithString:testString]) {
+        [NSException raise:NSInvalidArgumentException format:@"Could not build url out of string: '%@'", testString];
+    }
+}
+
+- (void)validateEmailString:(NSString*)testString {
+     NSPredicate *emailTestPredicate = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", emailRegEx]; // x@xxx.xx
+    if (![emailTestPredicate evaluateWithObject:testString]) {
+        [NSException raise:NSInvalidArgumentException format:@"'%@' doesn't look like an email"];
+    }
 }
 
 #pragma -

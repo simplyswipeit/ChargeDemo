@@ -20,6 +20,7 @@
 
 extern NSMutableString * randomStringFromCharacterSet(NSCharacterSet *characterSet, int stringLength);
 extern NSString * randomInvalidURLString(int stringLength);
+extern NSString *const emailRegEx;
 
 @interface IFChargeTestCase : SenTestCase {
     IFChargeRequest *testRequest_;
@@ -38,7 +39,7 @@ extern NSString * randomInvalidURLString(int stringLength);
 - (void)testNoSymbolsTextFieldSetter:(SEL)setter getter:(SEL)getter onObject:(id)obj withMaxLength:(NSUInteger)maxLength;
 
 // Similar, but for numbers-only fields
-- (void)testNumbersOnlyTextFieldSetter:(SEL)setter getter:(SEL)getter onObject:(id)obj withMaxLength:(NSUInteger)maxLength;
+- (void)testPhoneNumberTextFieldSetter:(SEL)setter getter:(SEL)getter onObject:(id)obj withMaxLength:(NSUInteger)maxLength;
 
 // Similar, but for email fields. Tests number range, and valid email format.
 - (void)testEmailTextFieldSetter:(SEL)setter getter:(SEL)getter onObject:(id)obj withMaxLength:(NSUInteger)maxLength;

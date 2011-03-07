@@ -17,9 +17,28 @@ extern NSString *const IFInvalidArgumentLengthException;
 // Indicates that an argument contained a disallowed character
 extern NSString *const IFDisallowedCharacterException;
 
+// To make atomic getters and setters a little less redundant
+extern id getObject_Atomic(id obj, id var);
+
 #define IF_CHARGE_MESSAGE_FIELD_PREFIX @"ifcc_"
 #define IF_CHARGE_NONCE_KEY @"ifcc_request_nonce"
 #define IF_CHARGE_DEFAULT_CURRENCY @"USD"
+
+#define setObject_AtomicCopy(iVar,newObj) \
+@synchronized(self) \
+{ \
+    if (iVar != newObj) { \
+        [iVar release]; \
+        iVar = [newObj copy]; \
+    } \
+}
+
+#define getObject_Atomic(iVar) \
+id result; \
+@synchronized(self) { \
+    result = [iVar retain]; \
+} \
+return [result autorelease];
 
 @interface IFChargeMessage : NSObject {
     NSString* _amount;
@@ -116,6 +135,16 @@ extern NSString *const IFDisallowedCharacterException;
 // unableToOpenURL gets called on an instance of IFChargeResponse, the user
 // will be presented with an alert summarizing the issue.
 - (void)unableToOpenURL;
+
+// validateTextArgumentWithMaxLength:forbiddenCharacterSets: - Checks a string
+// field setter against length and character set requirements
+- (void)validateTextArgument:(NSString*)arg withMaxLength:(int)maxLength forbiddenCharacterSets:firstSet, ... NS_REQUIRES_NIL_TERMINATION;
+
+// validateURLString - Raises exception if urlWithString:testString returns nil.
+- (void)validateURLString:(NSString*)testString;
+
+// validateEmailString - Checks that testString conforms to RFC 2822.
+- (void)validateEmailString:(NSString*)testString;
 
 + (NSArray*)knownFields;
 
